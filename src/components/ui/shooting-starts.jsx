@@ -2,11 +2,11 @@ import React, { useEffect, useState, useRef } from "react";
 import { cn } from "../../lib/utils";
 
 export const ShootingStars = ({
-  minSpeed = 0.5,
-  maxSpeed = 1.5,
+  minSpeed = 0.65,
+  maxSpeed = 1.75,
 
   starColor = "#FFFFFF",
-  trailColor = "#FF6347",
+  trailColor = "#FFFFFF0a",
   starWidth = 10,
   starHeight = 2,
   className,

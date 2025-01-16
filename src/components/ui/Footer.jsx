@@ -16,16 +16,6 @@ const Footer = () => {
       {/* Content Wrapper */}
       <div className="relative z-10 container mx-auto px-6 text-center">
         {/* Brand Name */}
-        <h2
-          className="text-4xl sm:text-5xl font-extrabold tracking-wide uppercase mb-8 text-white bg-gradient-to-b from-red-800 via-red-500 to-red-300"
-          style={{
-            WebkitBackgroundClip: "text",
-            color: "transparent",
-            textShadow: "2px 2px 8px rgba(255, 255, 255, 0.1)",
-          }}
-        >
-          TEDX
-        </h2>
 
         {/* Navigation Links */}
         <ul className="flex flex-wrap justify-center gap-6 sm:gap-8 text-sm uppercase">

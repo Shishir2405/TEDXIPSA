@@ -1,0 +1,154 @@
+
+
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 2rem;
+    backdrop-filter: blur(10px);
+    background: transparent;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    position: fixed;
+    width: 100%;
+    z-index: 1000;
+    top: 0;
+}
+
+.navbar-brand {
+    display: flex;
+    align-items: center;
+    position: fixed; /* Keeps it fixed in place */
+    top: 1rem; /* Adjust as needed */
+    left: 2rem; /* Adjust as needed */
+    z-index: 2500; /* Higher than the dropdown menu */
+}
+
+.tedx img{
+    height: 3rem;
+}
+
+.exponential {
+    font-size: 1.5rem;
+    vertical-align: super;
+    font-weight: bolder;
+}
+
+.cuneo {
+    color: white;
+    font-size: 3rem;
+    margin-left: 0.5rem;
+}
+
+.navbar-links {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end; /* Align items towards the right */
+    flex-grow: 1; /* Push the links to the right */
+}
+
+.navbar-links ul {
+    display: flex;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    margin-right: 1rem; /* Add some spacing between the links and the hamburger */
+}
+
+.navbar-links li {
+    margin: 0.5rem 1rem;
+    color: rgb(248, 243, 243);
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+.navbar-links li:hover {
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-decoration-color: red;
+}
+
+.hamburger {
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+    z-index: 1500;
+}
+
+.hamburger span {
+    height: 2px;
+    background: white;
+    margin: 3px 0;
+    width: 25px;
+}
+
+/* Dropdown Menu */
+.dropdown-menu {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 100%;
+    height: 100%;
+    background: black;
+    z-index: 2000;
+    display: none; /* Hidden by default */
+    flex-direction: column;
+    justify-content: flex-start; /* Start from the top */
+    align-items: flex-end; /* Align content to the right */
+    padding: 10rem; /* Add padding for spacing */
+    box-sizing: border-box;
+}
+
+.dropdown-menu.show {
+    display: flex; /* Display the menu when toggled */
+}
+
+.dropdown-menu ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    width: auto; /* Adjust width to fit content */
+}
+
+.dropdown-menu li {
+    margin: 1rem 0;
+    color: white;
+    font-size: 2rem;
+    cursor: pointer;
+    text-align: right; /* Align text to the right */
+    font-weight: bolder;
+}
+
+.dropdown-menu li:hover {
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-decoration-color: red;
+}
+
+.close-button {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    font-size: 3rem; /* Bigger button */
+    color: white;
+    cursor: pointer;
+    background: none;
+    border: none;
+    z-index: 2100;
+}
+
+.close-button:hover {
+    color: red;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .navbar-links ul {
+        display: none;
+    }
+
+    .hamburger {
+        display: flex;
+    }
+}

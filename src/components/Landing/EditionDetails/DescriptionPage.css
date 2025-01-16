@@ -1,0 +1,184 @@
+.description-page {
+    background-color: black;
+    color: white;
+    padding: 20px;
+    font-family: Arial, sans-serif;
+  
+  }
+  
+  .back-button {
+    font-size: 19px;
+    color: white;
+    text-decoration: underline;
+    text-decoration-color: red;
+    text-decoration-style: bold;
+    border-bottom: 2px solid red;
+    padding-bottom: 2px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    margin-bottom: 20px;
+  }
+  
+  .date {
+    font-size: 20px;
+    color: grey;
+    margin-bottom: 10px;
+  }
+  
+  .main-title {
+    font-size: 60px;
+    font-weight: bold;
+    margin-bottom: 50px;
+  }
+  
+  .event-image {
+    width: 100%;
+    border-radius: 20px;
+    margin-bottom: 50px;
+    height: 650px;
+    object-fit: cover;
+    padding: 20px;
+    border-radius: 50px;
+    
+  }
+  
+  .content-section {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 30px;
+    gap: 20px;
+  }
+  
+  .content-section .left, .content-section .right {
+    width: 48%;
+  }
+  
+  .content-section h2 {
+    font-size: 50px;
+    margin-bottom: 10px;
+  }
+  
+  .content-section p {
+    font-size: 22px;
+    line-height: 1.6;
+    margin-bottom: 70px;
+  }
+  
+  .video-section {
+    margin-bottom: 30px;
+  }
+  
+  .video {
+    width: 100%;
+    height: 700px;
+    border: none;
+    border-radius: 8px;
+    margin-bottom: 80px
+  }
+  
+  .ways-to-watch {
+    margin-bottom: 30px;
+  }
+  
+  .ways-to-watch h2 {
+    font-size: 50px;
+    margin-bottom: 40px;
+  }
+  
+  .ways {
+    display: flex;
+   justify-content: space-between;
+    gap: 20px;
+  }
+  
+  .way {
+    width: 30%;
+  }
+  
+  .way h3 {
+    font-size: 30px;
+    margin-bottom: 10px;
+  }
+  
+  .way p {
+    font-size: 21px;
+    line-height: 1.4;
+    margin-bottom: 60px;
+  }
+  
+  .speakers-section, .talks-section {
+    margin-bottom: 30px;
+    width: 100%; /* Full width */
+    overflow: hidden; /* Prevent unexpected overflow */
+  }
+  
+  .speakers-section h2, .talks-section h2 {
+    font-size: 50px;
+    margin-bottom: 10px;
+    text-align: left;
+  }
+  
+  .speakers-section p, .talks-section p {
+    font-size: 21px;
+    line-height: 1.6;
+  }
+  
+  .description-page .cards-container {
+    display: flex; /* Enable flexbox */
+    flex-wrap: nowrap; /* Prevent wrapping into rows */
+    justify-content: space-between; /* Distribute cards evenly */
+    gap: 20px; /* Add space between cards */
+    margin-top: 20px;
+    padding: 0 20px;
+    overflow-x: auto; /* Allow horizontal scrolling if cards overflow */
+}
+
+.description-page .card {
+    background-color: #1e1e1e;
+    border-radius: 12px;
+    width: 300px; /* Fixed width for each card */
+    height: 450px; /* Fixed height for consistency */
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    transition: transform 0.2s ease;
+}
+
+.description-page .card img {
+    width: 100%; /* Full width of the card */
+    height: 50%; /* Image takes up half the card height */
+    object-fit: cover; /* Maintain aspect ratio */
+}
+
+.description-page .card-content {
+    padding: 15px;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.description-page .speaker-name {
+    font-size: 16px;
+    color: #e0e0e0;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.description-page .speech-title {
+    font-size: 20px;
+    color: #fefcfc;
+    font-weight: bold;
+    margin-bottom: 15px;
+}
+
+.description-page .watch-link {
+    font-size: 16px;
+    color: #fefcfc;
+    text-decoration: underline;
+    text-decoration-color: red;
+    align-self: flex-end;
+    cursor: pointer;
+}
