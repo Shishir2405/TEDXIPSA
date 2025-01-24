@@ -11,7 +11,7 @@ const Hero = () => {
         {/* Content Container */}
         <div className="w-full min-h-[80vh] flex items-center justify-center px-6 md:px-8">
           <div className="max-w-[1400px] w-full">
-            <div className="bg-white/[0.03] backdrop-blur-md rounded-2xl p-8 md:p-12 border border-white/10">
+            <div className="bg-white/[0.03] backdrop-blur-md rounded-2xl p-8 md:p-12">
               <div className="flex flex-col lg:flex-row gap-8 lg:gap-16">
                 {/* Left Content */}
                 <div className="flex-1">
@@ -21,7 +21,7 @@ const Hero = () => {
                     className="h-12 mb-8"
                   />
                   <h1 className="text-4xl md:text-5xl lg:text-7xl font-bold text-white mb-6">
-                    We bring new ideas to share in Cuneo
+                  We bring a space for new Ideas
                   </h1>
                   <p className="text-lg md:text-xl text-gray-300 mb-8 max-w-2xl">
                     A gathering of bright minds sharing new ideas that inspire

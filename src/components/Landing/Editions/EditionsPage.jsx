@@ -67,7 +67,7 @@ const EditionsPage = () => {
                 
                 {/* Link with sliding underline effect */}
                 <Link 
-                  to="#" 
+                  to="/edition/description" 
                   className="inline-flex items-center text-white relative self-end group/link"
                 >
                   <span className="text-lg">
