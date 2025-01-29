@@ -1,32 +1,58 @@
-import React from "react";
-import { useNavigate } from "react-router-dom";
-
-const speakers = [
-  {
-    image:
-      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQH5sFjZPx1Yzi1b9_FpQzrxqgsjv2DPAp81Q&s",
-    name: "John Doe",
-    title: "The Future of AI",
-    link: "#",
-  },
-  {
-    image:
-      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQH5sFjZPx1Yzi1b9_FpQzrxqgsjv2DPAp81Q&s",
-    name: "Jane Smith",
-    title: "Designing for Tomorrow",
-    link: "#",
-  },
-  {
-    image:
-      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQH5sFjZPx1Yzi1b9_FpQzrxqgsjv2DPAp81Q&s",
-    name: "Alex Johnson",
-    title: "Sustainability in Tech",
-    link: "#",
-  },
-];
+import React, { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { collection, getDocs, query, where } from "firebase/firestore";
+import { db } from "../../../config/firebase";
+import { FaLinkedinIn, FaInstagram } from "react-icons/fa";
+import LoadingAnimation from "../../ui/Loading";
 
 const DescriptionPage = () => {
   const navigate = useNavigate();
+  const { editionId } = useParams();
+  const [editionData, setEditionData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    fetchEditionData();
+  }, [editionId]);
+
+  const fetchEditionData = async () => {
+    try {
+      const descriptionRef = collection(db, "editionDescriptions");
+      const q = query(descriptionRef, where("editionId", "==", editionId));
+      const querySnapshot = await getDocs(q);
+
+      if (!querySnapshot.empty) {
+        setEditionData({
+          id: querySnapshot.docs[0].id,
+          ...querySnapshot.docs[0].data(),
+        });
+      } else {
+        setError("Edition description not found");
+      }
+    } catch (err) {
+      setError("Failed to load edition data");
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="bg-black text-white min-h-screen flex items-center justify-center">
+        <LoadingAnimation />
+      </div>
+    );
+  }
+
+  if (error || !editionData) {
+    return (
+      <div className="bg-black text-white min-h-screen flex items-center justify-center">
+        <p className="text-xl text-red-500">{error || "Edition not found"}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-black text-white min-h-screen px-6 md:px-8 py-12">
@@ -48,17 +74,17 @@ const DescriptionPage = () => {
         {/* Header Section */}
         <div className="mb-12">
           <p className="text-gray-400 text-lg md:text-xl mb-4">
-            SATURDAY, MAY 4, 2024
+            {editionData.date}
           </p>
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold">
-            Main Event Heading
+            {editionData.title}
           </h1>
         </div>
 
         {/* Main Image */}
         <div className="mb-16 p-4 md:p-6">
           <img
-            src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTHhTODHGKBPA0P-Dmdn9uDUGzLRzpfDPGmbA&s"
+            src={editionData.mainImage}
             alt="Event"
             className="w-full h-[400px] md:h-[600px] object-cover rounded-3xl"
           />
@@ -71,38 +97,32 @@ const DescriptionPage = () => {
               Seek beyond the obvious
             </h2>
             <p className="text-gray-300 text-lg md:text-xl leading-relaxed">
-              "Seek" isn't just about chasing answers; it's about falling in
-              love with the whole process of asking questions, challenging what
-              we think we know, and keeping that flame of curiosity burning so
-              bright such that not only we get benefitted but the others who are
-              in the shadows of knowledge may become a guiding light themselves.
-              We believe in embracing the adventure of learning, growing, and
-              staying open to fresh perspectives.
+              {editionData.seekDescription}
             </p>
           </div>
           <div>
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6">
-              What we think?{" "}
+              What we think?
             </h2>
             <p className="text-gray-300 text-lg md:text-xl leading-relaxed">
-              At TEDxIPSA Indore, we take the "Seek" theme as our guide to shake
-              things up, surprise ourselves, and explore the countless ways
-              people have found their own unique paths of discovery.
+              {editionData.thoughtsDescription}
             </p>
           </div>
         </div>
 
         {/* Video Section */}
-        <div className="mb-16">
-          <div className="aspect-video rounded-xl overflow-hidden">
-            <iframe
-              title="Event Video"
-              src="https://youtu.be/T7olkUQYUcY?si=cICXvs_QDGpPmboF"
-              className="w-full h-full"
-              allowFullScreen
-            ></iframe>
+        {editionData.videoUrl && (
+          <div className="mb-16">
+            <div className="aspect-video rounded-xl overflow-hidden">
+              <iframe
+                title="Event Video"
+                src={editionData.videoUrl}
+                className="w-full h-full"
+                allowFullScreen
+              ></iframe>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Ways to Watch */}
         <div className="mb-16">
@@ -125,53 +145,114 @@ const DescriptionPage = () => {
         </div>
 
         {/* Speakers Section */}
-        <div className="mb-16">
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
-            Speakers on stage
-          </h2>
-          <p className="text-gray-300 text-lg md:text-xl mb-8">
-            Meet the incredible speakers who shared their inspiring stories and
-            groundbreaking ideas.
-          </p>
+        {editionData.speakers && editionData.speakers.length > 0 && (
+          <div className="mb-16">
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
+              Speakers on stage
+            </h2>
+            <p className="text-gray-300 text-lg md:text-xl mb-8">
+              Meet the incredible speakers who shared their inspiring stories
+              and groundbreaking ideas.
+            </p>
 
-          {/* Speakers Cards */}
-          <div className="flex gap-6 overflow-x-auto pb-8 snap-x snap-mandatory scrollbar-hide">
-            {speakers.map((speaker, index) => (
-              <div
-                key={index}
-                className="min-w-[300px] bg-zinc-900 rounded-xl overflow-hidden snap-start group"
-              >
-                {/* Image Container */}
-                <div className="relative h-[240px] overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-br from-purple-600/20 to-red-600/20 opacity-70" />
-                  <img
-                    src={speaker.image}
-                    alt={speaker.name}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                  />
-                </div>
+            {/* Speakers Cards */}
+            <div className="flex gap-6 overflow-x-auto pb-8 snap-x snap-mandatory scrollbar-hide">
+              {editionData.speakers.map((speaker, index) => (
+                <div
+                  key={index}
+                  className="min-w-[300px] bg-zinc-900 rounded-xl overflow-hidden snap-start group"
+                >
+                  {/* Image Container */}
+                  <div className="relative h-[240px] overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-br from-purple-600/20 to-red-600/20 opacity-70" />
+                    <img
+                      src={speaker.image}
+                      alt={speaker.name}
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    />
+                  </div>
 
-                {/* Content */}
-                <div className="p-6">
-                  <h3 className="text-gray-400 text-sm mb-2">{speaker.name}</h3>
-                  <p className="text-white text-xl font-bold mb-6">
-                    {speaker.title}
-                  </p>
-                  <a
-                    href={speaker.link}
-                    className="group/link inline-flex items-center text-white relative"
-                  >
-                    Watch the Talk
-                    <span className="ml-2 transform transition-transform duration-300 group-hover/link:translate-x-1">
-                      →
-                    </span>
-                    <span className="absolute -bottom-px left-0 w-0 h-[1px] bg-red-600 transition-all duration-300 group-hover/link:w-full" />
-                  </a>
+                  {/* Content */}
+                  <div className="p-6">
+                    <h3 className="text-gray-400 text-sm mb-2">
+                      {speaker.name}
+                    </h3>
+                    <p className="text-white text-xl font-bold mb-6">
+                      {speaker.title}
+                    </p>
+                    <a
+                      href={speaker.link}
+                      className="group/link inline-flex items-center text-white relative"
+                    >
+                      Watch the Talk
+                      <span className="ml-2 transform transition-transform duration-300 group-hover/link:translate-x-1">
+                        →
+                      </span>
+                      <span className="absolute -bottom-px left-0 w-0 h-[1px] bg-red-600 transition-all duration-300 group-hover/link:w-full" />
+                    </a>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
+        )}
+
+        {/* Team Section */}
+        {editionData.team && editionData.team.length > 0 && (
+          <div className="mb-16">
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
+              Edition Team
+            </h2>
+            <p className="text-gray-300 text-lg md:text-xl mb-8">
+              Meet the dedicated team that made this edition possible.
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {editionData.team.map((member, index) => (
+                <div
+                  key={index}
+                  className="bg-white/[0.03] backdrop-blur-lg rounded-xl p-5 transition-all duration-500 border border-white/10 hover:border-red-600 hover:-translate-y-1 hover:bg-white/[0.05] group"
+                >
+                  <div className="overflow-hidden rounded-xl mb-5">
+                    <img
+                      src={member.image}
+                      alt={member.name}
+                      className="w-full h-60 object-cover transition duration-500 group-hover:scale-105"
+                    />
+                  </div>
+                  <h4 className="text-xl font-semibold text-white mb-2">
+                    {member.name}
+                  </h4>
+                  <p className="text-red-400/90 text-base font-medium mb-4">
+                    {member.role}
+                  </p>
+                  <div className="flex gap-4 pt-3 border-t border-white/10">
+                    {member.linkedIn && member.linkedIn !== "#" && (
+                      <a
+                        href={member.linkedIn}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-white/70 text-sm font-medium px-3 py-1.5 rounded-full bg-white/5 hover:bg-gradient-to-r from-red-600 to-red-400 hover:text-white transition-all duration-300"
+                      >
+                        <FaLinkedinIn className="w-4 h-4" />
+                      </a>
+                    )}
+                    {member.instagram && member.instagram !== "#" && (
+                      <a
+                        href={member.instagram}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-white/70 text-sm font-medium px-3 py-1.5 rounded-full bg-white/5 hover:bg-gradient-to-r from-red-600 to-red-400 hover:text-white transition-all duration-300"
+                      >
+                        <FaInstagram className="w-4 h-4" />
+                      </a>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -7,18 +7,30 @@ import TeamSection from "./components/team/TeamSection";
 import EditionsPage from "./components/Landing/Editions/EditionsPage";
 import DescriptionPage from "./components/Landing/EditionDetails/DescriptionPage";
 import TEDxTicket from "./components/Landing/DummyTicket/TEDxTicket";
-import ContentForm from "./components/admin/ContentForm"; // Add this import
+import EditionForm from "./components/admin/ThemeForm";
+import AboutUsForm from "./components/admin/AboutUsForm/index";
+import SpeakerForm from "./components/admin/SpeakerForm";
+import TeamManagementForm from "./components/admin/TeamForm";
+import EditionDescriptionForm from "./components/admin/EditionDescForm";
+import AdminDashboard from "./components/admin/main";
+import AdminLogin from "./components/admin/AdminLogin";
+import ProtectedRoute from "./ProtectedRoute";
+import SpeakersPage from "./components/Landing/Speakers/SpeakersPage";
 
 function App() {
   return (
     <Router>
       <div className="min-h-screen flex flex-col bg-black">
-        {/* Fixed Header */}
-        <Header />
-        
+        {/* Fixed Header - Don't show on admin routes */}
+        <Routes>
+          <Route path="/admin/*" element={null} />
+          <Route path="*" element={<Header />} />
+        </Routes>
+
         {/* Main Content with top padding for navbar height */}
         <main className="flex-grow pt-20">
           <Routes>
+            {/* Public Routes */}
             <Route path="/" element={<Layout />} />
             <Route
               path="/team"
@@ -36,7 +48,15 @@ function App() {
                 </div>
               }
             />
-            
+
+            <Route
+              path="/speakers"
+              element={
+                <div className="container mx-auto px-4">
+                  <SpeakersPage />
+                </div>
+              }
+            />
             <Route
               path="/edition/description"
               element={
@@ -53,20 +73,71 @@ function App() {
                 </div>
               }
             />
-            {/* Add Admin Route */}
+
+            {/* Admin Routes */}
+            <Route path="/admin/login" element={<AdminLogin />} />
+
             <Route
-              path="/admin/content"
+              path="/admin"
               element={
-                <div className="container mx-auto px-4 bg-white min-h-screen py-8">
-                  <ContentForm />
-                </div>
+                <ProtectedRoute>
+                  <AdminDashboard />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/admin/edition"
+              element={
+                <ProtectedRoute>
+                  <EditionForm />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/admin/about"
+              element={
+                <ProtectedRoute>
+                  <AboutUsForm />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/admin/speakers"
+              element={
+                <ProtectedRoute>
+                  <SpeakerForm />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/admin/team"
+              element={
+                <ProtectedRoute>
+                  <TeamManagementForm />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/admin/editionDesc"
+              element={
+                <ProtectedRoute>
+                  <EditionDescriptionForm />
+                </ProtectedRoute>
               }
             />
           </Routes>
         </main>
-        
-        {/* Footer */}
-        <Footer />
+
+        {/* Footer - Don't show on admin routes */}
+        <Routes>
+          <Route path="/admin/*" element={null} />
+          <Route path="*" element={<Footer />} />
+        </Routes>
       </div>
     </Router>
   );

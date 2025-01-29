@@ -50,61 +50,53 @@ const HalfEarthOrbitSystem = () => {
   }
 
   return (
-    <div className="bg-black px-4 sm:px-6 md:px-8 py-8 sm:py-12 font-sans">
+    <div className="bg-black px-4 sm:px-6 md:px-8 py-8  font-sans">
       <div className="max-w-screen-xl mx-auto">
         <div className="relative">
+          {/* Arc from left top to right */}
+        
           {/* Orbit System */}
-          <div className="absolute left-1/2 -translate-x-1/2 -top-32 sm:-top-40 md:-top-48 w-full h-96 sm:h-[28rem] md:h-[32rem] lg:h-[36rem]">
-            <div className="relative w-full h-full">
-              <div className="absolute inset-0 transform-gpu"
-                   style={{
-                     transform: 'rotateX(65deg) rotateY(-25deg)',
-                     transformStyle: 'preserve-3d'
-                   }}>
-                {/* Orbit Ring */}
-                <div className="absolute top-1/2 left-1/2 w-full h-full -mt-48 -ml-48 sm:-mt-56 sm:-ml-56 md:-mt-64 md:-ml-64 lg:-mt-72 lg:-ml-72 rounded-full"
-                     style={{
-                       animation: 'orbit 10s linear infinite',
-                       transformStyle: 'preserve-3d'
-                     }}>
-                  {/* Satellite */}
-                  <div className="absolute top-full w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 lg:w-16 lg:h-16 -mt-4 -ml-4 sm:-mt-5 sm:-ml-5 md:-mt-6 md:-ml-6 lg:-mt-8 lg:-ml-8"
-                       style={{
-                         animation: 'invertOrbit 10s linear infinite',
-                         transformStyle: 'preserve-3d'
-                       }}>
-                    <img
-                      src="/Planet/k/2.png"
-                      alt="Satellite"
-                      className="w-full h-full rounded-full object-cover"
-                    />
-                  </div>
-                </div>
-                
-                {/* Half Earth Container */}
-                <div className="absolute top-1/2 left-1/2 w-full h-full -mt-24  sm:-mt-80 sm:-ml-60 md:-mt-64 md:-ml-64 lg:-mt-80 lg:-ml-96"
-                     style={{
-                       transform: 'rotateY(25deg) rotateX(-65deg)',
-                       transformStyle: 'preserve-3d'
-                     }}>
-                  <div className="relative w-full h-full overflow-hidden"
-                       style={{
-                         clipPath: 'inset(0 0 50% 0)',
-                         borderRadius: '50% 50% 0 0'
-                       }}>
-                    <img
-                      src="/Planet/k/1.png"
-                      alt="Half Earth"
-                      className="w-full h-full object-cover rounded-full"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
+          <div className="w-full h-96 sm:h-[28rem] md:h-[32rem] lg:h-[36rem]">
+          <div
+  className="relative w-full h-full overflow-hidden "
+  style={{
+    clipPath: 'inset(0 0 10% 0)',
+  }}
+>
+  {/* Static Image (Second Image) */}
+  <img
+    src="/Planet/k/2.jpg"
+    alt="Static Half Earth"
+    className="absolute top-0 left-0 w-full h-full object-contain lg:object-fill"
+  />
+
+  <div
+    className="absolute top-[60%]  w-full h-full"
+    style={{
+      animation: 'orbit 10s linear infinite', 
+      transformOrigin: 'center center',
+      clipPath: 'inset(0 0 10% 0)',
+
+    }}
+
+  >
+    <img
+      src="/Planet/k/2.png"
+      alt="Orbiting Image"
+      className="absolute w-12 md:w-32 h-12 md:h-32 object-cover"
+      style={{
+    
+      }}
+    />
+  </div>
+</div>
+
+
+
           </div>
 
           {/* What We Think Content Card */}
-          <div className="bg-zinc-900 rounded-lg overflow-hidden mt-24 sm:mt-28 md:mt-32">
+          <div className="bg-zinc-900 rounded-lg overflow-hidden -mt-12 ">
             <div className="flex flex-col lg:flex-row">
               {/* Text Content */}
               <div className="w-full lg:w-3/5 p-6 sm:p-8 lg:p-10">

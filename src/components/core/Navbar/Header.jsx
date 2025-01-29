@@ -13,27 +13,27 @@ const Header = () => {
   };
 
   const handleNavigation = (path) => {
-    if (path.startsWith('#')) {
+    if (path.startsWith("#")) {
       // Handle hash navigation
       const element = document.querySelector(path);
       if (element) {
         setMenuOpen(false);
         document.body.style.overflow = "auto";
-        
+
         // If we're not on the home page, navigate home first
-        if (location.pathname !== '/') {
-          navigate('/');
+        if (location.pathname !== "/") {
+          navigate("/");
           // Wait for navigation to complete before scrolling
           setTimeout(() => {
-            element.scrollIntoView({ 
-              behavior: 'smooth', 
-              block: 'start'
+            element.scrollIntoView({
+              behavior: "smooth",
+              block: "start",
             });
           }, 100);
         } else {
-          element.scrollIntoView({ 
-            behavior: 'smooth', 
-            block: 'start'
+          element.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
           });
         }
       }
@@ -43,7 +43,7 @@ const Header = () => {
       setMenuOpen(false);
       document.body.style.overflow = "auto";
       // Scroll to top for regular navigation
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
 
@@ -51,17 +51,15 @@ const Header = () => {
     { name: "Home", path: "/" },
     { name: "Editions", path: "/edition" },
     { name: "Team", path: "/team" },
-    { name: "About Us", path: "#about" },
+    { name: "Contact Us", path: "/contact" },
+    { name: "Speakers", path: "/speakers" },
   ];
 
-  const mobileNavItems = [
-    ...navItems,
-    { name: "Contact Us", path: "/contact" },
-  ];
+  const mobileNavItems = [...navItems];
 
   // Check if a path matches current location or hash
   const isActive = (path) => {
-    if (path.startsWith('#')) {
+    if (path.startsWith("#")) {
       return location.hash === path;
     }
     return location.pathname === path;
@@ -86,7 +84,9 @@ const Header = () => {
               >
                 <span
                   className={`text-white text-base font-medium cursor-pointer ${
-                    isActive(item.path) ? "opacity-100" : "opacity-80 hover:opacity-100"
+                    isActive(item.path)
+                      ? "opacity-100"
+                      : "opacity-80 hover:opacity-100"
                   }`}
                 >
                   {item.name}
@@ -134,7 +134,9 @@ const Header = () => {
               <div
                 key={index}
                 className={`group relative py-4 bg-black transition-all duration-500 ${
-                  menuOpen ? "translate-x-0 opacity-100" : "translate-x-8 opacity-0"
+                  menuOpen
+                    ? "translate-x-0 opacity-100"
+                    : "translate-x-8 opacity-0"
                 }`}
                 style={{
                   transitionDelay: `${index * 50}ms`,
@@ -143,7 +145,9 @@ const Header = () => {
               >
                 <span
                   className={`text-white text-2xl font-bold cursor-pointer relative ${
-                    isActive(item.path) ? "opacity-100" : "opacity-80 hover:opacity-100"
+                    isActive(item.path)
+                      ? "opacity-100"
+                      : "opacity-80 hover:opacity-100"
                   }`}
                 >
                   {item.name}

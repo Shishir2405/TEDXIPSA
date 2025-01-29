@@ -1,34 +1,36 @@
-import React, { useRef } from 'react';
-
-const speakers = [
-  {
-    image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQH5sFjZPx1Yzi1b9_FpQzrxqgsjv2DPAp81Q&s',
-    name: 'Michael Half',
-    title: ' The Mediamorphosis of Journalism',
-    gradient: 'from-red-500/20 to-purple-500/20'
-  },
-  {
-    image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQH5sFjZPx1Yzi1b9_FpQzrxqgsjv2DPAp81Q&s',
-    name: 'Francesca Picci',
-    title: "Nemo's Garden: What's Boiling in the Sea?",
-    gradient: 'from-blue-500/20 to-purple-600/20'
-  },
-  {
-    image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQH5sFjZPx1Yzi1b9_FpQzrxqgsjv2DPAp81Q&s',
-    name: 'Daniel Raineri',
-    title: 'The Shrinking World',
-    gradient: 'from-red-600/20 to-purple-500/20'
-  },
-  {
-    image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQH5sFjZPx1Yzi1b9_FpQzrxqgsjv2DPAp81Q&s',
-    name: 'Fiamma and Giuppy Izzo',
-    title: 'Dubbing: The Emotional Chameleon',
-    gradient: 'from-blue-400/20 to-purple-600/20'
-  }
-];
+import React, { useRef, useState, useEffect } from 'react';
+import { collection, getDocs, query, orderBy } from 'firebase/firestore';
+import { db } from '../../../config/firebase';
 
 const SpeakersSection = () => {
   const scrollContainerRef = useRef(null);
+  const [speakers, setSpeakers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    fetchSpeakers();
+  }, []);
+
+  const fetchSpeakers = async () => {
+    try {
+      const speakersRef = collection(db, "speakers");
+      const q = query(speakersRef, orderBy("createdAt", "desc"));
+      const querySnapshot = await getDocs(q);
+      
+      const speakersData = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      
+      setSpeakers(speakersData);
+    } catch (err) {
+      setError('Failed to load speakers');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const scroll = (direction) => {
     if (scrollContainerRef.current) {
@@ -39,6 +41,30 @@ const SpeakersSection = () => {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="bg-black px-4 md:px-8 py-12">
+        <div className="max-w-[1400px] mx-auto">
+          <div className="text-center text-white py-20">Loading speakers...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-black px-4 md:px-8 py-12">
+        <div className="max-w-[1400px] mx-auto">
+          <div className="text-center text-red-500 py-20">{error}</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (speakers.length === 0) {
+    return null; // Hide the section when no speakers are available
+  }
+
   return (
     <div className="bg-black px-4 md:px-8 py-12">
       <div className="max-w-[1400px] mx-auto">
@@ -47,7 +73,7 @@ const SpeakersSection = () => {
           <h2 className="text-2xl md:text-3xl lg:text-4xl text-white font-bold">
             Talk from the latest edition
           </h2>
-          <a href="#" className="group inline-flex items-center text-white text-base relative">
+          <a href="/speakers" className="group inline-flex items-center text-white text-base relative">
             Discover them all
             <span className="ml-1 transform transition-transform duration-300 group-hover:translate-x-1">→</span>
             <span className="absolute bottom-0 left-0 h-[1px] bg-red-600 w-0 transition-all duration-300 group-hover:w-full"></span>
@@ -61,9 +87,9 @@ const SpeakersSection = () => {
             className="flex gap-4 overflow-x-auto pb-8 scrollbar-hide snap-x snap-mandatory"
             style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
           >
-            {speakers.map((speaker, index) => (
+            {speakers.map((speaker) => (
               <div 
-                key={index}
+                key={speaker.id}
                 className="min-w-[300px] md:min-w-[320px] bg-zinc-900 rounded-lg overflow-hidden snap-start group h-[520px]"
               >
                 {/* Background Image Container */}
@@ -83,7 +109,7 @@ const SpeakersSection = () => {
                     {speaker.title}
                   </p>
                   <a 
-                    href="#" 
+                    href={`/talk/${speaker.id}`}
                     className="group inline-flex items-center text-white text-sm absolute bottom-4 right-4"
                   >
                     Watch the talk
@@ -96,20 +122,22 @@ const SpeakersSection = () => {
           </div>
 
           {/* Navigation */}
-          <div className="flex justify-center gap-3 mt-6">
-            <button 
-              onClick={() => scroll(-1)}
-              className="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center text-white text-sm hover:bg-white/10 transition-colors"
-            >
-              ←
-            </button>
-            <button 
-              onClick={() => scroll(1)}
-              className="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center text-white text-sm hover:bg-white/10 transition-colors"
-            >
-              →
-            </button>
-          </div>
+          {speakers.length > 3 && (
+            <div className="flex justify-center gap-3 mt-6">
+              <button 
+                onClick={() => scroll(-1)}
+                className="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center text-white text-sm hover:bg-white/10 transition-colors"
+              >
+                ←
+              </button>
+              <button 
+                onClick={() => scroll(1)}
+                className="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center text-white text-sm hover:bg-white/10 transition-colors"
+              >
+                →
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
