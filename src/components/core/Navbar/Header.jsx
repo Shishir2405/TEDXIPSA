@@ -51,8 +51,8 @@ const Header = () => {
     { name: "Home", path: "/" },
     { name: "Editions", path: "/edition" },
     { name: "Team", path: "/team" },
-    { name: "Contact Us", path: "/contact" },
     { name: "Speakers", path: "/speakers" },
+    { name: "Contact Us", path: "/contact" },
   ];
 
   const mobileNavItems = [...navItems];

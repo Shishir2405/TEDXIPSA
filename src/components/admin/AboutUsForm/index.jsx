@@ -11,56 +11,47 @@ import {
   orderBy,
 } from "firebase/firestore";
 import { db } from "../../../config/firebase";
-import { Trash2, Edit2, Plus, ChevronDown, ChevronUp } from "lucide-react";
+import { Trash2, Edit2, Plus } from "lucide-react";
 
-const AboutUsForm = () => {
+const ContentForm = () => {
   const initialFormState = {
-    mainTitle: "",
-    mainDescription: "",
-    sections: [
-      {
-        title: "",
-        description: "",
-        imageUrl: "",
-      },
-    ],
-    mission: {
-      title: "",
-      description: "",
-    },
-    vision: {
-      title: "",
-      description: "",
-    },
-    type: "mainContent",
+    title: "",
+    subtitle: "",
+    paragraphs: [""],
+    buttonText: "",
+    imageUrl: "",
+    type: "tedxThoughts", // Added type field with default value
   };
 
   const [formData, setFormData] = useState(initialFormState);
-  const [aboutUsContents, setAboutUsContents] = useState([]);
+  const [contents, setContents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState("");
   const [editingId, setEditingId] = useState(null);
   const [isFormVisible, setIsFormVisible] = useState(false);
-  const [expandedSection, setExpandedSection] = useState(null);
 
   useEffect(() => {
-    fetchAboutUsContent();
+    fetchContents();
   }, []);
 
-  const fetchAboutUsContent = async () => {
+  const fetchContents = async () => {
     try {
-      const aboutUsRef = collection(db, "aboutUs");
-      const q = query(aboutUsRef, orderBy("createdAt", "desc"));
+      const contentRef = collection(db, "cardContent");
+      const q = query(
+        contentRef,
+        where("type", "==", "tedxThoughts"),
+        orderBy("createdAt", "desc")
+      );
       const querySnapshot = await getDocs(q);
 
-      const contents = querySnapshot.docs.map((doc) => ({
+      const fetchedContents = querySnapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
       }));
 
-      setAboutUsContents(contents);
+      setContents(fetchedContents);
     } catch (err) {
       setError("Failed to load content");
       console.error(err);
@@ -77,55 +68,37 @@ const AboutUsForm = () => {
     }));
   };
 
-  const handleSectionChange = (index, field, value) => {
-    const newSections = [...formData.sections];
-    newSections[index] = {
-      ...newSections[index],
-      [field]: value,
-    };
+  const handleParagraphChange = (index, value) => {
+    const newParagraphs = [...formData.paragraphs];
+    newParagraphs[index] = value;
     setFormData((prev) => ({
       ...prev,
-      sections: newSections,
+      paragraphs: newParagraphs,
     }));
   };
 
-  const handleMissionVisionChange = (type, field, value) => {
+  const addParagraph = () => {
     setFormData((prev) => ({
       ...prev,
-      [type]: {
-        ...prev[type],
-        [field]: value,
-      },
+      paragraphs: [...prev.paragraphs, ""],
     }));
   };
 
-  const addSection = () => {
+  const removeParagraph = (index) => {
     setFormData((prev) => ({
       ...prev,
-      sections: [
-        ...prev.sections,
-        { title: "", description: "", imageUrl: "" },
-      ],
-    }));
-  };
-
-  const removeSection = (index) => {
-    setFormData((prev) => ({
-      ...prev,
-      sections: prev.sections.filter((_, i) => i !== index),
+      paragraphs: prev.paragraphs.filter((_, i) => i !== index),
     }));
   };
 
   const handleEdit = (content) => {
     setFormData({
-      mainTitle: content.mainTitle || "",
-      mainDescription: content.mainDescription || "",
-      sections: content.sections || [
-        { title: "", description: "", imageUrl: "" },
-      ],
-      mission: content.mission || { title: "", description: "" },
-      vision: content.vision || { title: "", description: "" },
-      type: content.type || "mainContent",
+      title: content.title || "",
+      subtitle: content.subtitle || "",
+      paragraphs: content.paragraphs || [""],
+      buttonText: content.buttonText || "",
+      imageUrl: content.imageUrl || "",
+      type: content.type || "tedxThoughts",
     });
     setEditingId(content.id);
     setIsFormVisible(true);
@@ -134,9 +107,9 @@ const AboutUsForm = () => {
   const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this content?")) {
       try {
-        await deleteDoc(doc(db, "aboutUs", id));
+        await deleteDoc(doc(db, "cardContent", id));
         setSuccessMessage("Content deleted successfully!");
-        fetchAboutUsContent();
+        fetchContents();
         setTimeout(() => setSuccessMessage(""), 3000);
       } catch (err) {
         setError("Failed to delete content");
@@ -153,13 +126,13 @@ const AboutUsForm = () => {
 
     try {
       if (editingId) {
-        const docRef = doc(db, "aboutUs", editingId);
+        const docRef = doc(db, "cardContent", editingId);
         await updateDoc(docRef, {
           ...formData,
           updatedAt: new Date().toISOString(),
         });
       } else {
-        await addDoc(collection(db, "aboutUs"), {
+        await addDoc(collection(db, "cardContent"), {
           ...formData,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
@@ -172,7 +145,7 @@ const AboutUsForm = () => {
       setFormData(initialFormState);
       setEditingId(null);
       setIsFormVisible(false);
-      fetchAboutUsContent();
+      fetchContents();
       setTimeout(() => setSuccessMessage(""), 3000);
     } catch (err) {
       setError(`Failed to ${editingId ? "update" : "save"} content`);
@@ -205,7 +178,7 @@ const AboutUsForm = () => {
         {/* Header */}
         <div className="flex justify-between items-center">
           <h1 className="text-2xl font-bold text-white">
-            Manage About Us Content
+            Manage TEDx Thoughts Content
           </h1>
           <button
             onClick={() => {
@@ -224,186 +197,98 @@ const AboutUsForm = () => {
         {isFormVisible && (
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="bg-black rounded-lg shadow-lg p-6 border border-zinc-800">
-              <h2 className="text-xl font-semibold mb-4 text-white">
-                {editingId ? "Edit Content" : "New Content"}
-              </h2>
-
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-200">
-                    Main Title
+                    Title
                   </label>
                   <input
                     type="text"
-                    name="mainTitle"
-                    value={formData.mainTitle}
+                    name="title"
+                    value={formData.title}
                     onChange={handleInputChange}
-                    className="mt-1 block w-full rounded-lg bg-zinc-900 border-zinc-700 text-white shadow-sm focus:ring-red-500 focus:border-red-500"
+                    className="mt-1 block w-full rounded-lg bg-zinc-900 border-zinc-700 text-white"
                     required
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-200">
-                    Main Description
+                    Subtitle
                   </label>
-                  <textarea
-                    name="mainDescription"
-                    value={formData.mainDescription}
+                  <input
+                    type="text"
+                    name="subtitle"
+                    value={formData.subtitle}
                     onChange={handleInputChange}
-                    rows="4"
-                    className="mt-1 block w-full rounded-lg bg-zinc-900 border-zinc-700 text-white shadow-sm focus:ring-red-500 focus:border-red-500"
+                    className="mt-1 block w-full rounded-lg bg-zinc-900 border-zinc-700 text-white"
                     required
                   />
                 </div>
 
-                {/* Sections */}
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
+                <div>
+                  <div className="flex justify-between items-center mb-2">
                     <label className="block text-sm font-medium text-gray-200">
-                      Content Sections
+                      Paragraphs
                     </label>
                     <button
                       type="button"
-                      onClick={addSection}
+                      onClick={addParagraph}
                       className="text-red-500 hover:text-red-400"
                     >
-                      + Add Section
+                      + Add Paragraph
                     </button>
                   </div>
-
-                  {formData.sections.map((section, index) => (
-                    <div
-                      key={index}
-                      className="bg-zinc-900 rounded-lg p-4 border border-zinc-700"
-                    >
-                      <div className="flex justify-between items-center mb-3">
-                        <h3 className="text-white font-medium">
-                          Section {index + 1}
-                        </h3>
-                        {formData.sections.length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => removeSection(index)}
-                            className="text-red-500 hover:text-red-400"
-                          >
-                            Remove
-                          </button>
-                        )}
-                      </div>
-                      <div className="space-y-3">
-                        <input
-                          type="text"
-                          value={section.title}
-                          onChange={(e) =>
-                            handleSectionChange(index, "title", e.target.value)
-                          }
-                          placeholder="Section Title"
-                          className="w-full rounded-lg bg-black border-zinc-700 text-white"
-                          required
-                        />
-                        <textarea
-                          value={section.description}
-                          onChange={(e) =>
-                            handleSectionChange(
-                              index,
-                              "description",
-                              e.target.value
-                            )
-                          }
-                          placeholder="Section Description"
-                          rows="3"
-                          className="w-full rounded-lg bg-black border-zinc-700 text-white"
-                          required
-                        />
-                        <input
-                          type="url"
-                          value={section.imageUrl}
-                          onChange={(e) =>
-                            handleSectionChange(
-                              index,
-                              "imageUrl",
-                              e.target.value
-                            )
-                          }
-                          placeholder="Image URL"
-                          className="w-full rounded-lg bg-black border-zinc-700 text-white"
-                          required
-                        />
-                      </div>
+                  {formData.paragraphs.map((paragraph, index) => (
+                    <div key={index} className="flex gap-2 mb-2">
+                      <textarea
+                        value={paragraph}
+                        onChange={(e) =>
+                          handleParagraphChange(index, e.target.value)
+                        }
+                        className="flex-1 rounded-lg bg-zinc-900 border-zinc-700 text-white"
+                        rows="3"
+                        required
+                      />
+                      {formData.paragraphs.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeParagraph(index)}
+                          className="text-red-500 hover:text-red-400"
+                        >
+                          Remove
+                        </button>
+                      )}
                     </div>
                   ))}
                 </div>
 
-                {/* Mission & Vision */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="bg-zinc-900 rounded-lg p-4 border border-zinc-700">
-                    <h3 className="text-white font-medium mb-3">Mission</h3>
-                    <div className="space-y-3">
-                      <input
-                        type="text"
-                        value={formData.mission.title}
-                        onChange={(e) =>
-                          handleMissionVisionChange(
-                            "mission",
-                            "title",
-                            e.target.value
-                          )
-                        }
-                        placeholder="Mission Title"
-                        className="w-full rounded-lg bg-black border-zinc-700 text-white"
-                        required
-                      />
-                      <textarea
-                        value={formData.mission.description}
-                        onChange={(e) =>
-                          handleMissionVisionChange(
-                            "mission",
-                            "description",
-                            e.target.value
-                          )
-                        }
-                        placeholder="Mission Description"
-                        rows="3"
-                        className="w-full rounded-lg bg-black border-zinc-700 text-white"
-                        required
-                      />
-                    </div>
-                  </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-200">
+                    Button Text
+                  </label>
+                  <input
+                    type="text"
+                    name="buttonText"
+                    value={formData.buttonText}
+                    onChange={handleInputChange}
+                    className="mt-1 block w-full rounded-lg bg-zinc-900 border-zinc-700 text-white"
+                    required
+                  />
+                </div>
 
-                  <div className="bg-zinc-900 rounded-lg p-4 border border-zinc-700">
-                    <h3 className="text-white font-medium mb-3">Vision</h3>
-                    <div className="space-y-3">
-                      <input
-                        type="text"
-                        value={formData.vision.title}
-                        onChange={(e) =>
-                          handleMissionVisionChange(
-                            "vision",
-                            "title",
-                            e.target.value
-                          )
-                        }
-                        placeholder="Vision Title"
-                        className="w-full rounded-lg bg-black border-zinc-700 text-white"
-                        required
-                      />
-                      <textarea
-                        value={formData.vision.description}
-                        onChange={(e) =>
-                          handleMissionVisionChange(
-                            "vision",
-                            "description",
-                            e.target.value
-                          )
-                        }
-                        placeholder="Vision Description"
-                        rows="3"
-                        className="w-full rounded-lg bg-black border-zinc-700 text-white"
-                        required
-                      />
-                    </div>
-                  </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-200">
+                    Image URL
+                  </label>
+                  <input
+                    type="url"
+                    name="imageUrl"
+                    value={formData.imageUrl}
+                    onChange={handleInputChange}
+                    className="mt-1 block w-full rounded-lg bg-zinc-900 border-zinc-700 text-white"
+                    required
+                  />
                 </div>
               </div>
 
@@ -416,7 +301,7 @@ const AboutUsForm = () => {
                     ${
                       saving
                         ? "bg-zinc-600 cursor-not-allowed"
-                        : "bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                        : "bg-red-600 hover:bg-red-700"
                     }
                   `}
                 >
@@ -433,131 +318,34 @@ const AboutUsForm = () => {
 
         {/* Content List */}
         <div className="space-y-4">
-          {aboutUsContents.map((content) => (
+          {contents.map((content) => (
             <div
               key={content.id}
-              className="bg-black rounded-lg shadow-lg overflow-hidden border border-zinc-800"
+              className="bg-black rounded-lg shadow-lg p-6 border border-zinc-800"
             >
-              <div className="p-6">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="text-xl font-bold text-white mb-2">
-                      {content.mainTitle}
-                    </h3>
-                    <p className="text-gray-400 text-sm mb-4">
-                      {content.mainDescription}
-                    </p>
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => handleEdit(content)}
-                      className="flex items-center gap-1 px-3 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-white transition-colors"
-                    >
-                      <Edit2 size={16} />
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDelete(content.id)}
-                      className="flex items-center gap-1 px-3 py-1 rounded bg-red-600 hover:bg-red-700 text-white transition-colors"
-                    >
-                      <Trash2 size={16} />
-                      Delete
-                    </button>
-                    <button
-                      onClick={() =>
-                        setExpandedSection(
-                          expandedSection === content.id ? null : content.id
-                        )
-                      }
-                      className="flex items-center gap-1 px-3 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-white transition-colors"
-                    >
-                      {expandedSection === content.id ? (
-                        <ChevronUp size={16} />
-                      ) : (
-                        <ChevronDown size={16} />
-                      )}
-                      {expandedSection === content.id
-                        ? "Show Less"
-                        : "Show More"}
-                    </button>
-                  </div>
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="text-xl font-bold text-white mb-2">
+                    {content.title}
+                  </h3>
+                  <p className="text-gray-400">{content.subtitle}</p>
                 </div>
-
-                {expandedSection === content.id && (
-                  <div className="mt-6 space-y-6">
-                    {/* Sections */}
-                    {content.sections && content.sections.length > 0 && (
-                      <div className="space-y-4">
-                        <h4 className="text-lg font-semibold text-white">
-                          Sections
-                        </h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {content.sections.map((section, index) => (
-                            <div
-                              key={index}
-                              className="bg-zinc-900 rounded-lg p-4 border border-zinc-700"
-                            >
-                              <div className="aspect-w-16 aspect-h-9 mb-4">
-                                <img
-                                  src={section.imageUrl}
-                                  alt={section.title}
-                                  className="rounded-lg object-cover w-full h-48"
-                                />
-                              </div>
-                              <h5 className="text-white font-medium mb-2">
-                                {section.title}
-                              </h5>
-                              <p className="text-gray-400 text-sm">
-                                {section.description}
-                              </p>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Mission & Vision */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="bg-zinc-900 rounded-lg p-4 border border-zinc-700">
-                        <h4 className="text-lg font-semibold text-white mb-3">
-                          Mission
-                        </h4>
-                        <h5 className="text-white font-medium mb-2">
-                          {content.mission?.title}
-                        </h5>
-                        <p className="text-gray-400 text-sm">
-                          {content.mission?.description}
-                        </p>
-                      </div>
-
-                      <div className="bg-zinc-900 rounded-lg p-4 border border-zinc-700">
-                        <h4 className="text-lg font-semibold text-white mb-3">
-                          Vision
-                        </h4>
-                        <h5 className="text-white font-medium mb-2">
-                          {content.vision?.title}
-                        </h5>
-                        <p className="text-gray-400 text-sm">
-                          {content.vision?.description}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Metadata */}
-                    <div className="flex justify-between text-sm text-gray-500 pt-4 border-t border-zinc-800">
-                      <span>
-                        Created:{" "}
-                        {new Date(content.createdAt).toLocaleDateString()}
-                      </span>
-                      {content.updatedAt && (
-                        <span>
-                          Last Updated:{" "}
-                          {new Date(content.updatedAt).toLocaleDateString()}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                )}
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleEdit(content)}
+                    className="flex items-center gap-1 px-3 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-white"
+                  >
+                    <Edit2 size={16} />
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => handleDelete(content.id)}
+                    className="flex items-center gap-1 px-3 py-1 rounded bg-red-600 hover:bg-red-700 text-white"
+                  >
+                    <Trash2 size={16} />
+                    Delete
+                  </button>
+                </div>
               </div>
             </div>
           ))}
@@ -567,4 +355,4 @@ const AboutUsForm = () => {
   );
 };
 
-export default AboutUsForm;
+export default ContentForm;

@@ -2,7 +2,7 @@ import React from "react";
 import { ShootingStars } from "../ui/shooting-starts";
 import { StarsBackground } from "../ui/starts-background";
 import { useNavigate } from "react-router-dom";
-import Solar from "./Solar";
+import aside from "/ttt.png";
 
 const Hero = () => {
   const navigate = useNavigate();
@@ -44,11 +44,15 @@ const Hero = () => {
                     >
                       <span className="relative">
                         Learn More
-                        <span className="absolute -bottom-1 left-0 w-0 h-[1px] bg-red-600 
-                                     transition-all duration-300 group-hover:w-full" />
+                        <span
+                          className="absolute -bottom-1 left-0 w-0 h-[1px] bg-red-600 
+                                     transition-all duration-300 group-hover:w-full"
+                        />
                       </span>
-                      <span className="ml-2 transform transition-transform duration-300 
-                                   group-hover:translate-x-1">
+                      <span
+                        className="ml-2 transform transition-transform duration-300 
+                                   group-hover:translate-x-1"
+                      >
                         →
                       </span>
                     </a>
@@ -58,7 +62,7 @@ const Hero = () => {
                 {/* Right Content */}
                 <div className="flex-1 hidden lg:flex justify-center items-center">
                   <img
-                    src="https://www.tedxcuneo.com/img/home/ubuntu-x.svg"
+                    src={aside}
                     alt="TEDx Logo"
                     className="w-full max-w-[500px] transform transition-all duration-700
                              hover:scale-105 hover:rotate-3"

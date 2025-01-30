@@ -20,7 +20,8 @@ const EditionDescriptionForm = () => {
     seekDescription: "",
     thoughtsDescription: "",
     videoUrl: "",
-    editionId: "", // Reference to the parent edition
+    editionId: "",
+    teamLink: "",
     speakers: [
       {
         name: "",
@@ -29,19 +30,11 @@ const EditionDescriptionForm = () => {
         link: "#",
       },
     ],
-    team: [
-      {
-        name: "",
-        role: "",
-        image: "",
-        linkedIn: "",
-        instagram: "",
-      },
-    ],
   };
 
   const [formData, setFormData] = useState(initialFormState);
   const [editions, setEditions] = useState([]);
+  const [descriptions, setDescriptions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
@@ -51,6 +44,7 @@ const EditionDescriptionForm = () => {
 
   useEffect(() => {
     fetchEditions();
+    fetchDescriptions();
   }, []);
 
   const fetchEditions = async () => {
@@ -64,6 +58,21 @@ const EditionDescriptionForm = () => {
       setEditions(editionData);
     } catch (err) {
       setError("Failed to load editions");
+      console.error(err);
+    }
+  };
+
+  const fetchDescriptions = async () => {
+    try {
+      const descriptionsRef = collection(db, "editionDescriptions");
+      const querySnapshot = await getDocs(descriptionsRef);
+      const descriptionData = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setDescriptions(descriptionData);
+    } catch (err) {
+      setError("Failed to load descriptions");
       console.error(err);
     } finally {
       setLoading(false);
@@ -90,34 +99,12 @@ const EditionDescriptionForm = () => {
     }));
   };
 
-  const handleTeamMemberChange = (index, field, value) => {
-    const newTeam = [...formData.team];
-    newTeam[index] = {
-      ...newTeam[index],
-      [field]: value,
-    };
-    setFormData((prev) => ({
-      ...prev,
-      team: newTeam,
-    }));
-  };
-
   const addSpeaker = () => {
     setFormData((prev) => ({
       ...prev,
       speakers: [
         ...prev.speakers,
         { name: "", title: "", image: "", link: "#" },
-      ],
-    }));
-  };
-
-  const addTeamMember = () => {
-    setFormData((prev) => ({
-      ...prev,
-      team: [
-        ...prev.team,
-        { name: "", role: "", image: "", linkedIn: "", instagram: "" },
       ],
     }));
   };
@@ -129,11 +116,27 @@ const EditionDescriptionForm = () => {
     }));
   };
 
-  const removeTeamMember = (index) => {
-    setFormData((prev) => ({
-      ...prev,
-      team: prev.team.filter((_, i) => i !== index),
-    }));
+  const handleEdit = (description) => {
+    setFormData(description);
+    setEditingId(description.id);
+    setIsFormVisible(true);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this description?")) {
+      return;
+    }
+
+    try {
+      await deleteDoc(doc(db, "editionDescriptions", id));
+      setDescriptions(descriptions.filter((desc) => desc.id !== id));
+      setSuccessMessage("Description deleted successfully!");
+      setTimeout(() => setSuccessMessage(""), 3000);
+    } catch (err) {
+      setError("Failed to delete description");
+      console.error(err);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -151,11 +154,20 @@ const EditionDescriptionForm = () => {
       if (editingId) {
         const docRef = doc(db, "editionDescriptions", editingId);
         await updateDoc(docRef, descriptionData);
+        setDescriptions(
+          descriptions.map((desc) =>
+            desc.id === editingId ? { ...descriptionData, id: editingId } : desc
+          )
+        );
       } else {
-        await addDoc(collection(db, "editionDescriptions"), {
+        const docRef = await addDoc(collection(db, "editionDescriptions"), {
           ...descriptionData,
           createdAt: new Date().toISOString(),
         });
+        setDescriptions([
+          ...descriptions,
+          { ...descriptionData, id: docRef.id },
+        ]);
       }
 
       setSuccessMessage(
@@ -322,6 +334,21 @@ const EditionDescriptionForm = () => {
                   />
                 </div>
               </div>
+              {/* Add new Team Link field */}
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-200">
+                  Team Link
+                </label>
+                <input
+                  type="url"
+                  name="teamLink"
+                  value={formData.teamLink}
+                  onChange={handleInputChange}
+                  className="mt-1 block w-full rounded-lg bg-zinc-900 border-zinc-700 text-white"
+                  placeholder="Enter link to view full team"
+                  required
+                />
+              </div>
 
               {/* Speakers Section */}
               <div className="mt-8">
@@ -403,116 +430,6 @@ const EditionDescriptionForm = () => {
                 </div>
               </div>
 
-              {/* Team Section */}
-              <div className="mt-8">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-medium text-white">
-                    Edition Team
-                  </h3>
-                  <button
-                    type="button"
-                    onClick={addTeamMember}
-                    className="flex items-center gap-2 text-red-500 hover:text-red-400"
-                  >
-                    <UserPlus size={20} />
-                    Add Team Member
-                  </button>
-                </div>
-
-                <div className="space-y-4">
-                  {formData.team.map((member, index) => (
-                    <div
-                      key={index}
-                      className="bg-zinc-900 rounded-lg p-4 border border-zinc-800"
-                    >
-                      <div className="flex justify-between items-center mb-4">
-                        <h4 className="text-white font-medium">
-                          Team Member {index + 1}
-                        </h4>
-                        <button
-                          type="button"
-                          onClick={() => removeTeamMember(index)}
-                          className="text-red-500 hover:text-red-400"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <input
-                          type="text"
-                          placeholder="Name"
-                          value={member.name}
-                          onChange={(e) =>
-                            handleTeamMemberChange(
-                              index,
-                              "name",
-                              e.target.value
-                            )
-                          }
-                          className="rounded-lg bg-black border-zinc-700 text-white"
-                          required
-                        />
-                        <input
-                          type="text"
-                          placeholder="Role"
-                          value={member.role}
-                          onChange={(e) =>
-                            handleTeamMemberChange(
-                              index,
-                              "role",
-                              e.target.value
-                            )
-                          }
-                          className="rounded-lg bg-black border-zinc-700 text-white"
-                          required
-                        />
-                        <input
-                          type="url"
-                          placeholder="Image URL"
-                          value={member.image}
-                          onChange={(e) =>
-                            handleTeamMemberChange(
-                              index,
-                              "image",
-                              e.target.value
-                            )
-                          }
-                          className="rounded-lg bg-black border-zinc-700 text-white"
-                          required
-                        />
-                        <input
-                          type="url"
-                          placeholder="LinkedIn URL"
-                          value={member.linkedIn}
-                          onChange={(e) =>
-                            handleTeamMemberChange(
-                              index,
-                              "linkedIn",
-                              e.target.value
-                            )
-                          }
-                          className="rounded-lg bg-black border-zinc-700 text-white"
-                        />
-                        <input
-                          type="url"
-                          placeholder="Instagram URL"
-                          value={member.instagram}
-                          onChange={(e) =>
-                            handleTeamMemberChange(
-                              index,
-                              "instagram",
-                              e.target.value
-                            )
-                          }
-                          className="rounded-lg bg-black border-zinc-700 text-white"
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
               {/* Submit Button */}
               <div className="mt-8 flex justify-end">
                 <button
@@ -537,6 +454,77 @@ const EditionDescriptionForm = () => {
             </div>
           </form>
         )}
+
+        {/* Description Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {descriptions.map((description) => (
+            <div
+              key={description.id}
+              className="bg-black rounded-lg shadow-lg border border-zinc-800 overflow-hidden"
+            >
+              {/* Card Image */}
+              <div className="relative h-48">
+                <img
+                  src={description.mainImage}
+                  alt={description.title}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+
+              {/* Card Content */}
+              <div className="p-4 space-y-4">
+                <div className="text-sm text-gray-400">{description.date}</div>
+                <h3 className="text-xl font-bold text-white">
+                  {description.title}
+                </h3>
+
+                {/* Speakers Preview */}
+                {description.speakers && description.speakers.length > 0 && (
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-medium text-gray-300">
+                      Speakers:
+                    </h4>
+                    <div className="flex flex-wrap gap-2">
+                      {description.speakers.map((speaker, idx) => (
+                        <div
+                          key={idx}
+                          className="flex items-center gap-2 bg-zinc-900 rounded-full px-3 py-1"
+                        >
+                          <img
+                            src={speaker.image}
+                            alt={speaker.name}
+                            className="w-6 h-6 rounded-full"
+                          />
+                          <span className="text-sm text-white">
+                            {speaker.name}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Action Buttons */}
+                <div className="flex justify-end gap-2 pt-4">
+                  <button
+                    onClick={() => handleEdit(description)}
+                    className="flex items-center gap-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded"
+                  >
+                    <Edit2 size={16} />
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => handleDelete(description.id)}
+                    className="flex items-center gap-1 bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded"
+                  >
+                    <Trash2 size={16} />
+                    Delete
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

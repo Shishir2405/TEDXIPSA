@@ -29,7 +29,7 @@ const AdminDashboard = () => {
       gradient: "from-blue-600/20 via-purple-600/20 to-red-600/20"
     },
     {
-      title: "Edition Description",
+      title: "Edition Description Management",
       description: "Manage detailed descriptions and content for each edition",
       icon: <Settings className="w-6 h-6" />,
       link: "/admin/editionDesc",
@@ -48,6 +48,13 @@ const AdminDashboard = () => {
       icon: <Mic2 className="w-6 h-6" />,
       link: "/admin/speakers",
       gradient: "from-purple-600/20 via-violet-600/20 to-indigo-600/20"
+    },
+    {
+      title: "Old Team Management",
+      description: "Organize team members, roles, and department structures",
+      icon: <Users2 className="w-6 h-6" />,
+      link: "/admin/old-team",
+      gradient: "from-green-600/20 via-emerald-600/20 to-teal-600/20"
     },
   ];
 

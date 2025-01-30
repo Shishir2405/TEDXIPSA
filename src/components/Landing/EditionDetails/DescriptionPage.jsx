@@ -3,30 +3,60 @@ import { useNavigate, useParams } from "react-router-dom";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "../../../config/firebase";
 import { FaLinkedinIn, FaInstagram } from "react-icons/fa";
+import { MoveLeft,Users } from "lucide-react";
 import LoadingAnimation from "../../ui/Loading";
+import { Link } from "react-router-dom";
 
 const DescriptionPage = () => {
   const navigate = useNavigate();
   const { editionId } = useParams();
   const [editionData, setEditionData] = useState(null);
+  const [oldTeamData, setOldTeamData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [dateElements] = useState(["2", "0", "2", "4"]);
+  const [animatedIndices, setAnimatedIndices] = useState([]);
 
   useEffect(() => {
     fetchEditionData();
   }, [editionId]);
 
+  useEffect(() => {
+    // Date animation effect
+    const interval = setInterval(() => {
+      setAnimatedIndices((prev) => {
+        const next = [...prev];
+        if (next.length < 4) {
+          next.push(next.length);
+        } else {
+          next.length = 0;
+        }
+        return next;
+      });
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, []);
+
   const fetchEditionData = async () => {
     try {
+      setLoading(true);
+      // Fetch edition description
       const descriptionRef = collection(db, "editionDescriptions");
       const q = query(descriptionRef, where("editionId", "==", editionId));
       const querySnapshot = await getDocs(q);
 
       if (!querySnapshot.empty) {
-        setEditionData({
+        const data = {
           id: querySnapshot.docs[0].id,
           ...querySnapshot.docs[0].data(),
-        });
+        };
+        setEditionData(data);
+
+        // If it's an old event, fetch old team data
+        if (isOldEvent(data.date)) {
+          await fetchOldTeamData();
+        }
       } else {
         setError("Edition description not found");
       }
@@ -37,6 +67,90 @@ const DescriptionPage = () => {
       setLoading(false);
     }
   };
+
+  const fetchOldTeamData = async () => {
+    try {
+      const oldTeamRef = collection(db, "oldTeam");
+      const q = query(oldTeamRef, where("editionId", "==", editionId));
+      const querySnapshot = await getDocs(q);
+
+      const oldTeamData = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+
+      setOldTeamData(oldTeamData);
+    } catch (err) {
+      console.error("Failed to fetch old team data:", err);
+    }
+  };
+
+  const isOldEvent = (date) => {
+    if (!date) return false;
+    const eventDate = new Date(date);
+    const currentDate = new Date();
+    return eventDate < currentDate;
+  };
+
+  const renderTeamMember = (member, index) => (
+    <div
+      key={index}
+      className="bg-white/[0.03] backdrop-blur-lg rounded-xl p-5 transition-all duration-500 border border-white/10 hover:border-red-600 hover:-translate-y-1 hover:bg-white/[0.05] group"
+    >
+      <div className="overflow-hidden rounded-xl mb-5">
+        <img
+          src={member.image}
+          alt={member.name}
+          className="w-full h-60 object-cover transition duration-500 group-hover:scale-105"
+        />
+      </div>
+      <h4 className="text-xl font-semibold text-white mb-2">{member.name}</h4>
+      <p className="text-red-400/90 text-base font-medium mb-4">
+        {member.role}
+      </p>
+      <div className="flex gap-4 pt-3 border-t border-white/10">
+        {member.linkedIn && member.linkedIn !== "#" && (
+          <a
+            href={member.linkedIn}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-white/70 text-sm font-medium px-3 py-1.5 rounded-full bg-white/5 hover:bg-gradient-to-r from-red-600 to-red-400 hover:text-white transition-all duration-300"
+          >
+            <FaLinkedinIn className="w-4 h-4" />
+          </a>
+        )}
+        {member.instagram && member.instagram !== "#" && (
+          <a
+            href={member.instagram}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-white/70 text-sm font-medium px-3 py-1.5 rounded-full bg-white/5 hover:bg-gradient-to-r from-red-600 to-red-400 hover:text-white transition-all duration-300"
+          >
+            <FaInstagram className="w-4 h-4" />
+          </a>
+        )}
+      </div>
+    </div>
+  );
+
+  const renderDateAnimation = () => (
+    <div className="flex justify-center items-center gap-4 my-8">
+      {dateElements.map((num, index) => (
+        <div
+          key={index}
+          className={`w-16 h-16 flex items-center justify-center text-3xl font-bold rounded-lg border-2 
+            ${
+              animatedIndices.includes(index)
+                ? "border-red-600 text-red-600 scale-110 bg-white/5"
+                : "border-white/20 text-white/70"
+            } 
+            transition-all duration-500`}
+        >
+          {num}
+        </div>
+      ))}
+    </div>
+  );
 
   if (loading) {
     return (
@@ -53,19 +167,53 @@ const DescriptionPage = () => {
       </div>
     );
   }
+  
+  const TeamViewButton = ({ teamLink }) => {
+    const [dots, setDots] = useState('');
+  
+    useEffect(() => {
+      const interval = setInterval(() => {
+        setDots(prev => {
+          if (prev.length >= 3) return '';
+          return prev + '.';
+        });
+      }, 500);
+  
+      return () => clearInterval(interval);
+    }, []);
+  
+    if (!teamLink) return null;
+  
+    return (
+      <div className="mb-16 space-y-8 text-left">
+        <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white">
+          Meet Our Team{dots}
+        </h2>
+        
+        <Link
+          to={teamLink}
+          className="inline-flex items-center gap-3 bg-zinc-900 hover:bg-zinc-800 px-6 py-3 rounded-lg border border-white/10 hover:border-red-500 transition-all duration-300"
+        >
+          <Users className="h-5 w-5 text-red-500" />
+          <span className="font-medium text-white">View Full Team</span>
+        </Link>
+      </div>
+    );
+  };
+  
 
   return (
-    <div className="bg-black text-white min-h-screen px-6 md:px-8 py-12">
+    <div className="bg-black text-white min-h-screen px-6 md:px-8 py-12 pt-20">
       <div className="max-w-[1400px] mx-auto">
         {/* Back Button */}
         <button
-          onClick={() => navigate("/editions")}
+          onClick={() => navigate("/edition")}
           className="group inline-flex items-center text-white mb-8"
         >
           <span className="mr-2 transition-transform duration-300 group-hover:-translate-x-1">
-            ←
+            <MoveLeft />
           </span>
-          <span className="relative">
+          <span className="relative font-semibold">
             List of editions
             <span className="absolute -bottom-px left-0 w-full h-[1px] bg-red-600" />
           </span>
@@ -194,63 +342,7 @@ const DescriptionPage = () => {
                 </div>
               ))}
             </div>
-          </div>
-        )}
-
-        {/* Team Section */}
-        {editionData.team && editionData.team.length > 0 && (
-          <div className="mb-16">
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
-              Edition Team
-            </h2>
-            <p className="text-gray-300 text-lg md:text-xl mb-8">
-              Meet the dedicated team that made this edition possible.
-            </p>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {editionData.team.map((member, index) => (
-                <div
-                  key={index}
-                  className="bg-white/[0.03] backdrop-blur-lg rounded-xl p-5 transition-all duration-500 border border-white/10 hover:border-red-600 hover:-translate-y-1 hover:bg-white/[0.05] group"
-                >
-                  <div className="overflow-hidden rounded-xl mb-5">
-                    <img
-                      src={member.image}
-                      alt={member.name}
-                      className="w-full h-60 object-cover transition duration-500 group-hover:scale-105"
-                    />
-                  </div>
-                  <h4 className="text-xl font-semibold text-white mb-2">
-                    {member.name}
-                  </h4>
-                  <p className="text-red-400/90 text-base font-medium mb-4">
-                    {member.role}
-                  </p>
-                  <div className="flex gap-4 pt-3 border-t border-white/10">
-                    {member.linkedIn && member.linkedIn !== "#" && (
-                      <a
-                        href={member.linkedIn}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-white/70 text-sm font-medium px-3 py-1.5 rounded-full bg-white/5 hover:bg-gradient-to-r from-red-600 to-red-400 hover:text-white transition-all duration-300"
-                      >
-                        <FaLinkedinIn className="w-4 h-4" />
-                      </a>
-                    )}
-                    {member.instagram && member.instagram !== "#" && (
-                      <a
-                        href={member.instagram}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-white/70 text-sm font-medium px-3 py-1.5 rounded-full bg-white/5 hover:bg-gradient-to-r from-red-600 to-red-400 hover:text-white transition-all duration-300"
-                      >
-                        <FaInstagram className="w-4 h-4" />
-                      </a>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
+            <TeamViewButton teamLink={editionData.teamLink} />
           </div>
         )}
       </div>

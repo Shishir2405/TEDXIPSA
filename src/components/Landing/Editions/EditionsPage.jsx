@@ -35,7 +35,7 @@ const EditionsPage = () => {
   };
 
   const handleEditionClick = (editionId) => {
-    navigate(`/editions/${editionId}/description`);
+    navigate(`/editions/${editionId}`);
   };
 
   if (loading) {

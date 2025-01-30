@@ -16,6 +16,9 @@ import AdminDashboard from "./components/admin/main";
 import AdminLogin from "./components/admin/AdminLogin";
 import ProtectedRoute from "./ProtectedRoute";
 import SpeakersPage from "./components/Landing/Speakers/SpeakersPage";
+import OldTeam from "./components/team/OldTeam";
+import OldTeamManagementForm from "./components/admin/OldTeam";
+import ContactPage from "./components/core/Navbar/ContactPage";
 
 function App() {
   return (
@@ -28,7 +31,7 @@ function App() {
         </Routes>
 
         {/* Main Content with top padding for navbar height */}
-        <main className="flex-grow pt-20">
+        <main className="flex-grow">
           <Routes>
             {/* Public Routes */}
             <Route path="/" element={<Layout />} />
@@ -48,6 +51,14 @@ function App() {
                 </div>
               }
             />
+            <Route
+              path="/contact"
+              element={
+                <div className="container mx-auto px-4">
+                  <ContactPage />
+                </div>
+              }
+            />
 
             <Route
               path="/speakers"
@@ -58,13 +69,14 @@ function App() {
               }
             />
             <Route
-              path="/edition/description"
+              path="/editions/:editionId"
               element={
                 <div className="container mx-auto px-4">
                   <DescriptionPage />
                 </div>
               }
             />
+
             <Route
               path="/ticket"
               element={
@@ -73,6 +85,7 @@ function App() {
                 </div>
               }
             />
+            <Route path="/old-team/:editionId" element={<OldTeam />} />
 
             {/* Admin Routes */}
             <Route path="/admin/login" element={<AdminLogin />} />
@@ -118,6 +131,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <TeamManagementForm />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/old-team"
+              element={
+                <ProtectedRoute>
+                  <OldTeamManagementForm />
                 </ProtectedRoute>
               }
             />
