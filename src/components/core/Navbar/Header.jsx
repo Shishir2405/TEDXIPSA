@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import logo from "/logo/white_logo.png";
+import logo from "/tedxlogo/logo-white.png";
 
 const Header = () => {
   const [menuOpen, setMenuOpen] = useState(false);
