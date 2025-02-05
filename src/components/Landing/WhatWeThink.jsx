@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "../../config/firebase";
+import { Link } from "react-router-dom";
 
 const HalfEarthOrbitSystem = () => {
   const [content, setContent] = useState({

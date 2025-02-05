@@ -104,20 +104,20 @@ const Header = () => {
         {/* Hamburger Button */}
         <button
           onClick={toggleMenu}
-          className="relative z-50 w-8 h-6 flex flex-col justify-between ml-auto"
+          className="relative z-50 w-8 h-6 flex flex-col justify-between ml-auto mt-2"
         >
           <span
-            className={`w-full h-0.5 bg-white transition-all duration-300 origin-left ${
+            className={`w-full h-0.5 bg-white transition-all duration-300 rounded-full origin-left ${
               menuOpen ? "rotate-45 translate-x-px" : ""
             }`}
           ></span>
           <span
-            className={`w-full h-0.5 bg-white transition-all duration-300 ${
+            className={`w-full h-0.5 bg-white transition-all duration-300 rounded-full ${
               menuOpen ? "opacity-0" : ""
             }`}
           ></span>
           <span
-            className={`w-full h-0.5 bg-white transition-all duration-300 origin-left ${
+            className={`w-full h-0.5 bg-white transition-all duration-300 rounded-full origin-left ${
               menuOpen ? "-rotate-45 translate-x-px" : ""
             }`}
           ></span>
@@ -129,7 +129,7 @@ const Header = () => {
             menuOpen ? "opacity-100 visible" : "opacity-0 invisible"
           }`}
         >
-          <div className="flex flex-col items-end justify-end p-8 pt-24 bg-black">
+          <div className="h-screen flex flex-col items-end justify-end p-8 pt-24 bg-black">
             {mobileNavItems.map((item, index) => (
               <div
                 key={index}
