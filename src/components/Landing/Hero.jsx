@@ -46,24 +46,7 @@ const Hero = () => {
                       Get Tickets
                     </button>
                     
-                    <a
-                      href="#about"
-                      className="text-white group inline-flex items-center relative"
-                    >
-                      <span className="relative">
-                        Learn More
-                        <span
-                          className="absolute -bottom-1 left-0 w-0 h-[1px] bg-red-600 
-                                    transition-all duration-300 group-hover:w-full"
-                        />
-                      </span>
-                      <span
-                        className="ml-2 transform transition-transform duration-300 
-                                  group-hover:translate-x-1"
-                      >
-                        →
-                      </span>
-                    </a>
+                 
                   </div>
                 </div>
 

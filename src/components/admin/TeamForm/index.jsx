@@ -18,6 +18,7 @@ import {
   Edit2,
   Plus,
   UserPlus,
+  GripVertical,
 } from "lucide-react";
 
 const TeamManagementForm = () => {
@@ -42,6 +43,7 @@ const TeamManagementForm = () => {
   const [editingId, setEditingId] = useState(null);
   const [isFormVisible, setIsFormVisible] = useState(false);
   const [newDepartment, setNewDepartment] = useState("");
+  const [draggedItem, setDraggedItem] = useState(null);
 
   useEffect(() => {
     fetchTeamData();
@@ -49,7 +51,6 @@ const TeamManagementForm = () => {
 
   const fetchTeamData = async () => {
     try {
-      // Fetch departments
       const deptRef = collection(db, "departments");
       const deptQuery = query(deptRef, orderBy("order", "asc"));
       const deptSnapshot = await getDocs(deptQuery);
@@ -59,7 +60,6 @@ const TeamManagementForm = () => {
       }));
       setDepartments(deptData);
 
-      // Fetch members
       const membersRef = collection(db, "team");
       const membersQuery = query(membersRef, orderBy("order", "asc"));
       const membersSnapshot = await getDocs(membersQuery);
@@ -82,6 +82,44 @@ const TeamManagementForm = () => {
       ...prev,
       [name]: type === "checkbox" ? checked : value,
     }));
+  };
+
+  const handleDragStart = (e, index) => {
+    setDraggedItem(index);
+    e.currentTarget.style.opacity = "0.5";
+  };
+
+  const handleDragEnd = async (e) => {
+    e.currentTarget.style.opacity = "1";
+    setDraggedItem(null);
+
+    try {
+      const batch = writeBatch(db);
+      departments.forEach((dept, index) => {
+        const deptRef = doc(db, "departments", dept.id);
+        batch.update(deptRef, { order: index });
+      });
+      await batch.commit();
+      setSuccessMessage("Departments reordered successfully!");
+      setTimeout(() => setSuccessMessage(""), 3000);
+    } catch (err) {
+      setError("Failed to update department order");
+      console.error(err);
+      fetchTeamData();
+    }
+  };
+
+  const handleDragOver = (index) => {
+    if (draggedItem === null) return;
+    if (draggedItem === index) return;
+
+    const newDepartments = [...departments];
+    const draggedDept = newDepartments[draggedItem];
+    newDepartments.splice(draggedItem, 1);
+    newDepartments.splice(index, 0, draggedDept);
+    
+    setDepartments(newDepartments);
+    setDraggedItem(index);
   };
 
   const handleSubmit = async (e) => {
@@ -142,34 +180,6 @@ const TeamManagementForm = () => {
     }
   };
 
-  const moveDepartment = async (departmentId, direction) => {
-    const currentIndex = departments.findIndex((d) => d.id === departmentId);
-    const newIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
-
-    if (newIndex < 0 || newIndex >= departments.length) return;
-
-    try {
-      const batch = writeBatch(db);
-
-      // Update orders
-      const currentDept = departments[currentIndex];
-      const swapDept = departments[newIndex];
-
-      batch.update(doc(db, "departments", currentDept.id), {
-        order: swapDept.order,
-      });
-      batch.update(doc(db, "departments", swapDept.id), {
-        order: currentDept.order,
-      });
-
-      await batch.commit();
-      fetchTeamData();
-    } catch (err) {
-      setError("Failed to reorder departments");
-      console.error(err);
-    }
-  };
-
   const handleDeleteDepartment = async (departmentId) => {
     if (
       !window.confirm(
@@ -181,7 +191,6 @@ const TeamManagementForm = () => {
 
     try {
       await deleteDoc(doc(db, "departments", departmentId));
-      // Remove members of this department
       const deptMembers = members.filter((m) => m.department === departmentId);
       const batch = writeBatch(db);
       deptMembers.forEach((member) => {
@@ -220,7 +229,6 @@ const TeamManagementForm = () => {
   return (
     <div className="min-h-screen bg-zinc-900 p-6">
       <div className="max-w-7xl mx-auto space-y-8">
-        {/* Messages */}
         {error && (
           <div className="bg-red-900/50 text-red-200 p-4 rounded-lg border border-red-700">
             {error}
@@ -233,13 +241,11 @@ const TeamManagementForm = () => {
           </div>
         )}
 
-        {/* Departments Management */}
         <div className="bg-black rounded-lg shadow-lg p-6 border border-zinc-800">
           <h2 className="text-2xl font-bold text-white mb-6">
             Manage Departments
           </h2>
 
-          {/* Add Department Form */}
           <div className="flex gap-4 mb-6">
             <input
               type="text"
@@ -257,37 +263,21 @@ const TeamManagementForm = () => {
             </button>
           </div>
 
-          {/* Departments List */}
           <div className="space-y-4">
             {departments.map((dept, index) => (
               <div
                 key={dept.id}
-                className="flex items-center justify-between bg-zinc-900 p-4 rounded-lg"
+                draggable
+                onDragStart={(e) => handleDragStart(e, index)}
+                onDragEnd={handleDragEnd}
+                onDragOver={() => handleDragOver(index)}
+                className="flex items-center justify-between bg-zinc-900 p-4 rounded-lg cursor-move hover:bg-zinc-800 transition-colors"
               >
-                <span className="text-white font-medium">{dept.name}</span>
+                <div className="flex items-center gap-4">
+                  <GripVertical className="text-gray-500" size={20} />
+                  <span className="text-white font-medium">{dept.name}</span>
+                </div>
                 <div className="flex gap-2">
-                  <button
-                    onClick={() => moveDepartment(dept.id, "up")}
-                    disabled={index === 0}
-                    className={`p-2 rounded-lg ${
-                      index === 0
-                        ? "text-gray-500"
-                        : "text-white hover:bg-zinc-800"
-                    }`}
-                  >
-                    <ArrowUp size={20} />
-                  </button>
-                  <button
-                    onClick={() => moveDepartment(dept.id, "down")}
-                    disabled={index === departments.length - 1}
-                    className={`p-2 rounded-lg ${
-                      index === departments.length - 1
-                        ? "text-gray-500"
-                        : "text-white hover:bg-zinc-800"
-                    }`}
-                  >
-                    <ArrowDown size={20} />
-                  </button>
                   <button
                     onClick={() => handleDeleteDepartment(dept.id)}
                     className="p-2 rounded-lg text-red-500 hover:bg-red-500/20"
@@ -300,7 +290,6 @@ const TeamManagementForm = () => {
           </div>
         </div>
 
-        {/* Team Members Management */}
         <div className="bg-black rounded-lg shadow-lg p-6 border border-zinc-800">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-bold text-white">Team Members</h2>
@@ -317,7 +306,6 @@ const TeamManagementForm = () => {
             </button>
           </div>
 
-          {/* Member Form */}
           {isFormVisible && (
             <form onSubmit={handleSubmit} className="space-y-4 mb-8">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -446,7 +434,6 @@ const TeamManagementForm = () => {
             </form>
           )}
 
-          {/* Members List */}
           {departments.map((dept) => {
             const deptMembers = members.filter((m) => m.department === dept.id);
             const heads = deptMembers.filter((m) => m.isHead);
@@ -460,7 +447,6 @@ const TeamManagementForm = () => {
                   {dept.name}
                 </h3>
 
-                {/* Department Heads */}
                 {heads.length > 0 && (
                   <div className="mb-4">
                     <h4 className="text-red-500 text-sm font-medium mb-3">
@@ -513,7 +499,6 @@ const TeamManagementForm = () => {
                   </div>
                 )}
 
-                {/* Team Members */}
                 {teamMembers.length > 0 && (
                   <div>
                     <h4 className="text-red-500 text-sm font-medium mb-3">

@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "../../../config/firebase";
 import { FaLinkedinIn, FaInstagram } from "react-icons/fa";
-import { MoveLeft,Users } from "lucide-react";
+import { MoveLeft, Users } from "lucide-react";
 import LoadingAnimation from "../../ui/Loading";
 import { Link } from "react-router-dom";
 
@@ -16,6 +16,17 @@ const DescriptionPage = () => {
   const [error, setError] = useState(null);
   const [dateElements] = useState(["2", "0", "2", "4"]);
   const [animatedIndices, setAnimatedIndices] = useState([]);
+
+  const scrollRef = useRef(null);
+
+  const scroll = (direction) => {
+    const container = scrollRef.current;
+    const scrollAmount = 300;
+    container.scrollBy({
+      left: direction * scrollAmount,
+      behavior: "smooth",
+    });
+  };
 
   useEffect(() => {
     fetchEditionData();
@@ -167,29 +178,29 @@ const DescriptionPage = () => {
       </div>
     );
   }
-  
+
   const TeamViewButton = ({ teamLink }) => {
-    const [dots, setDots] = useState('');
-  
+    const [dots, setDots] = useState("");
+
     useEffect(() => {
       const interval = setInterval(() => {
-        setDots(prev => {
-          if (prev.length >= 3) return '';
-          return prev + '.';
+        setDots((prev) => {
+          if (prev.length >= 3) return "";
+          return prev + ".";
         });
       }, 500);
-  
+
       return () => clearInterval(interval);
     }, []);
-  
+
     if (!teamLink) return null;
-  
+
     return (
       <div className="mb-16 space-y-8 text-left">
         <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white">
           Meet Our Team{dots}
         </h2>
-        
+
         <Link
           to={teamLink}
           className="inline-flex items-center gap-3 bg-zinc-900 hover:bg-zinc-800 px-6 py-3 rounded-lg border border-white/10 hover:border-red-500 transition-all duration-300"
@@ -200,7 +211,6 @@ const DescriptionPage = () => {
       </div>
     );
   };
-  
 
   return (
     <div className="bg-black text-white min-h-screen px-6 md:px-8 py-12 pt-20">
@@ -231,11 +241,13 @@ const DescriptionPage = () => {
 
         {/* Main Image */}
         <div className="mb-16 p-4 md:p-6">
-          <img
-            src={editionData.mainImage}
-            alt="Event"
-            className="w-full h-[400px] md:h-[600px] object-cover rounded-3xl"
-          />
+          <div className="w-full h-[400px] md:h-[600px] bg-zinc-900/50 rounded-3xl">
+            <img
+              src={editionData.mainImage}
+              alt="Event"
+              className="w-full h-full object-contain rounded-3xl"
+            />
+          </div>
         </div>
 
         {/* Content Sections */}
@@ -303,45 +315,66 @@ const DescriptionPage = () => {
               and groundbreaking ideas.
             </p>
 
-            {/* Speakers Cards */}
-            <div className="flex gap-6 overflow-x-auto pb-8 snap-x snap-mandatory scrollbar-hide">
-              {editionData.speakers.map((speaker, index) => (
-                <div
-                  key={index}
-                  className="min-w-[300px] bg-zinc-900 rounded-xl overflow-hidden snap-start group"
-                >
-                  {/* Image Container */}
-                  <div className="relative h-[240px] overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-br from-purple-600/20 to-red-600/20 opacity-70" />
-                    <img
-                      src={speaker.image}
-                      alt={speaker.name}
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                    />
+            <div className="relative">
+              {/* Speakers Cards */}
+              <div
+                ref={scrollRef}
+                className="flex gap-6 overflow-hidden pb-8 snap-x snap-mandatory"
+              >
+                {editionData.speakers.map((speaker, index) => (
+                  <div
+                    key={index}
+                    className="min-w-[300px] flex-none bg-zinc-900 rounded-xl overflow-hidden snap-start group"
+                  >
+                    <div className="relative h-[240px] overflow-hidden">
+                      <div className="absolute inset-0 bg-gradient-to-br from-purple-600/20 to-red-600/20 opacity-70" />
+                      <img
+                        src={speaker.image}
+                        alt={speaker.name}
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                      />
+                    </div>
+                    <div className="p-6">
+                      <h3 className="text-gray-400 text-sm mb-2">
+                        {speaker.name}
+                      </h3>
+                      <p className="text-white text-xl font-bold mb-6">
+                        {speaker.title}
+                      </p>
+                      <a
+                        href={speaker.link}
+                        className="group/link inline-flex items-center text-white relative"
+                      >
+                        Watch the Talk
+                        <span className="ml-2 transform transition-transform duration-300 group-hover/link:translate-x-1">
+                          →
+                        </span>
+                        <span className="absolute -bottom-px left-0 w-0 h-[1px] bg-red-600 transition-all duration-300 group-hover/link:w-full" />
+                      </a>
+                    </div>
                   </div>
+                ))}
+              </div>
 
-                  {/* Content */}
-                  <div className="p-6">
-                    <h3 className="text-gray-400 text-sm mb-2">
-                      {speaker.name}
-                    </h3>
-                    <p className="text-white text-xl font-bold mb-6">
-                      {speaker.title}
-                    </p>
-                    <a
-                      href={speaker.link}
-                      className="group/link inline-flex items-center text-white relative"
-                    >
-                      Watch the Talk
-                      <span className="ml-2 transform transition-transform duration-300 group-hover/link:translate-x-1">
-                        →
-                      </span>
-                      <span className="absolute -bottom-px left-0 w-0 h-[1px] bg-red-600 transition-all duration-300 group-hover/link:w-full" />
-                    </a>
-                  </div>
+              {/* Navigation Buttons */}
+              {editionData.speakers.length > 3 && (
+                <div className="flex justify-center gap-3 mt-6">
+                  <button
+                    onClick={() => scroll(-1)}
+                    className="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center text-white text-sm hover:bg-white/10 transition-colors"
+                  >
+                    ←
+                  </button>
+                  <button
+                    onClick={() => scroll(1)}
+                    className="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center text-white text-sm hover:bg-white/10 transition-colors"
+                  >
+                    →
+                  </button>
                 </div>
-              ))}
+              )}
             </div>
+
             <TeamViewButton teamLink={editionData.teamLink} />
           </div>
         )}
