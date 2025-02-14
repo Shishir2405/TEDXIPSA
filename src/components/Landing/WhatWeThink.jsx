@@ -74,7 +74,7 @@ const HalfEarthOrbitSystem = () => {
               <div
                 className="absolute top-[60%]  w-full h-full"
                 style={{
-                  animation: "orbit 10s linear infinite",
+                  animation: "orbit 15s linear infinite",
                   transformOrigin: "center center",
                   clipPath: "inset(0 0 10% 0)",
                 }}

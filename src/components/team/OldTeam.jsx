@@ -139,7 +139,7 @@ const OldTeam = () => {
                   style={{ animationDelay: `${index * 0.1}s` }}
                 >
                   <h3 className="text-4xl md:text-5xl lg:text-6xl font-extrabold mb-12 bg-gradient-to-r from-red-600 to-red-400 bg-clip-text text-transparent inline-block">
-                    {department.name} Team
+                    {department.name} 
                   </h3>
 
                   {/* Department Heads */}

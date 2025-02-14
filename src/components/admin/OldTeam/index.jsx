@@ -18,10 +18,13 @@ import {
   Edit2,
   Plus,
   UserPlus,
+  Save,
+  X
 } from "lucide-react";
 import { FaLinkedinIn, FaInstagram } from "react-icons/fa";
+import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 
-const OldTeamManagementForm = () => {
+const EnhancedTeamManagementForm = () => {
   const initialMemberState = {
     name: "",
     role: "",
@@ -31,12 +34,13 @@ const OldTeamManagementForm = () => {
     department: "",
     isHead: false,
     order: 0,
-    editionId: "", // Added editionId field
+    editionId: "",
   };
 
   const [formData, setFormData] = useState(initialMemberState);
   const [departments, setDepartments] = useState([]);
   const [members, setMembers] = useState([]);
+  const [editions, setEditions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
@@ -44,14 +48,15 @@ const OldTeamManagementForm = () => {
   const [editingId, setEditingId] = useState(null);
   const [isFormVisible, setIsFormVisible] = useState(false);
   const [newDepartment, setNewDepartment] = useState("");
+  const [editingDepartment, setEditingDepartment] = useState(null);
 
   useEffect(() => {
-    fetchTeamData();
+    fetchData();
   }, []);
 
-  const fetchTeamData = async () => {
+  const fetchData = async () => {
     try {
-      // Fetch departments - corrected collection name
+      // Fetch departments
       const deptRef = collection(db, "olddepartments");
       const deptQuery = query(deptRef, orderBy("order", "asc"));
       const deptSnapshot = await getDocs(deptQuery);
@@ -61,7 +66,7 @@ const OldTeamManagementForm = () => {
       }));
       setDepartments(deptData);
 
-      // Fetch members - corrected collection name
+      // Fetch members
       const membersRef = collection(db, "oldteam");
       const membersQuery = query(membersRef, orderBy("order", "asc"));
       const membersSnapshot = await getDocs(membersQuery);
@@ -70,22 +75,102 @@ const OldTeamManagementForm = () => {
         ...doc.data(),
       }));
       setMembers(membersData);
+
+      // Fetch editions
+      const editionsRef = collection(db, "editions");
+      const editionsQuery = query(editionsRef, orderBy("year", "desc"));
+      const editionsSnapshot = await getDocs(editionsQuery);
+      const editionsData = editionsSnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setEditions(editionsData);
     } catch (err) {
-      setError("Failed to load team data");
+      setError("Failed to load data");
       console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
+  const handleDragEnd = async (result) => {
+    if (!result.destination) return;
+
+    const items = Array.from(departments);
+    const [reorderedItem] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reorderedItem);
+
+    // Update order property for all items
+    const updatedItems = items.map((item, index) => ({
+      ...item,
+      order: index,
+    }));
+
+    setDepartments(updatedItems);
+
+    try {
+      const batch = writeBatch(db);
+      updatedItems.forEach((dept) => {
+        batch.update(doc(db, "olddepartments", dept.id), { order: dept.order });
+      });
+      await batch.commit();
+    } catch (err) {
+      setError("Failed to update department order");
+      console.error(err);
+    }
+  };
+
+  const handleEditDepartment = async (dept) => {
+    setEditingDepartment({
+      id: dept.id,
+      name: dept.name,
+    });
+  };
+
+  const handleAddDepartment = async () => {
+    if (!newDepartment.trim()) return;
+
+    try {
+      await addDoc(collection(db, "olddepartments"), {
+        name: newDepartment.trim(),
+        order: departments.length,
+        createdAt: new Date().toISOString(),
+      });
+      setNewDepartment("");
+      setSuccessMessage("Department added successfully!");
+      fetchData();
+    } catch (err) {
+      setError("Failed to add department");
+      console.error(err);
+    }
+  };
+
+  const handleUpdateDepartment = async () => {
+    if (!editingDepartment || !editingDepartment.name.trim()) return;
+
+    try {
+      await updateDoc(doc(db, "olddepartments", editingDepartment.id), {
+        name: editingDepartment.name.trim(),
+      });
+      setSuccessMessage("Department updated successfully!");
+      setEditingDepartment(null);
+      fetchData();
+    } catch (err) {
+      setError("Failed to update department");
+      console.error(err);
+    }
+  };
+
+  // Rest of the component remains similar to the original, but updated to include edition selection
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: type === "checkbox" ? checked : value
+      [name]: type === "checkbox" ? checked : value,
     }));
   };
 
+  // Modified handleSubmit to include editionId
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
@@ -97,9 +182,8 @@ const OldTeamManagementForm = () => {
         ...formData,
         order: editingId ? formData.order : members.length,
         updatedAt: new Date().toISOString(),
-        // Only save links if they're not empty, otherwise don't include the field
         ...(formData.linkedIn ? { linkedIn: formData.linkedIn } : {}),
-        ...(formData.instagram ? { instagram: formData.instagram } : {})
+        ...(formData.instagram ? { instagram: formData.instagram } : {}),
       };
 
       if (editingId) {
@@ -112,114 +196,16 @@ const OldTeamManagementForm = () => {
         });
       }
 
-      setSuccessMessage(
-        `Member ${editingId ? "updated" : "added"} successfully!`
-      );
+      setSuccessMessage(`Member ${editingId ? "updated" : "added"} successfully!`);
       setFormData(initialMemberState);
       setEditingId(null);
       setIsFormVisible(false);
-      fetchTeamData();
-      setTimeout(() => setSuccessMessage(""), 3000);
+      fetchData();
     } catch (err) {
       setError(`Failed to ${editingId ? "update" : "add"} member`);
       console.error(err);
     } finally {
       setSaving(false);
-    }
-  };
-
-  const handleAddDepartment = async () => {
-    if (!newDepartment.trim()) return;
-
-    try {
-      // Corrected collection name for departments
-      await addDoc(collection(db, "olddepartments"), {
-        name: newDepartment.trim(),
-        order: departments.length,
-        createdAt: new Date().toISOString(),
-      });
-      setNewDepartment("");
-      fetchTeamData();
-      setSuccessMessage("Department added successfully!");
-      setTimeout(() => setSuccessMessage(""), 3000);
-    } catch (err) {
-      setError("Failed to add department");
-      console.error(err);
-    }
-  };
-
-  const moveDepartment = async (departmentId, direction) => {
-    const currentIndex = departments.findIndex((d) => d.id === departmentId);
-    const newIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
-
-    if (newIndex < 0 || newIndex >= departments.length) return;
-
-    try {
-      const batch = writeBatch(db);
-
-      // Update orders - corrected collection name
-      const currentDept = departments[currentIndex];
-      const swapDept = departments[newIndex];
-
-      batch.update(doc(db, "olddepartments", currentDept.id), {
-        order: swapDept.order,
-      });
-      batch.update(doc(db, "olddepartments", swapDept.id), {
-        order: currentDept.order,
-      });
-
-      await batch.commit();
-      fetchTeamData();
-    } catch (err) {
-      setError("Failed to reorder departments");
-      console.error(err);
-    }
-  };
-
-  const handleDeleteDepartment = async (departmentId) => {
-    if (
-      !window.confirm(
-        "Are you sure? This will also remove all members in this department."
-      )
-    ) {
-      return;
-    }
-
-    try {
-      // Corrected collection names
-      await deleteDoc(doc(db, "olddepartments", departmentId));
-      
-      // Remove members of this department
-      const deptMembers = members.filter((m) => m.department === departmentId);
-      const batch = writeBatch(db);
-      deptMembers.forEach((member) => {
-        batch.delete(doc(db, "oldteam", member.id));
-      });
-      await batch.commit();
-      
-      fetchTeamData();
-      setSuccessMessage("Department and associated members deleted successfully!");
-      setTimeout(() => setSuccessMessage(""), 3000);
-    } catch (err) {
-      setError("Failed to delete department");
-      console.error(err);
-    }
-  };
-
-  const handleDeleteMember = async (memberId) => {
-    if (!window.confirm("Are you sure you want to delete this member?")) {
-      return;
-    }
-
-    try {
-      // Corrected collection name
-      await deleteDoc(doc(db, "oldteam", memberId));
-      fetchTeamData();
-      setSuccessMessage("Member deleted successfully!");
-      setTimeout(() => setSuccessMessage(""), 3000);
-    } catch (err) {
-      setError("Failed to delete member");
-      console.error(err);
     }
   };
 
@@ -230,7 +216,6 @@ const OldTeamManagementForm = () => {
   return (
     <div className="min-h-screen bg-zinc-900 p-6">
       <div className="max-w-7xl mx-auto space-y-8">
-        {/* Messages */}
         {error && (
           <div className="bg-red-900/50 text-red-200 p-4 rounded-lg border border-red-700">
             {error}
@@ -267,71 +252,113 @@ const OldTeamManagementForm = () => {
             </button>
           </div>
 
-          {/* Departments List */}
-          <div className="space-y-4">
-            {departments.map((dept, index) => (
-              <div
-                key={dept.id}
-                className="flex items-center justify-between bg-zinc-900 p-4 rounded-lg"
-              >
-                <span className="text-white font-medium">{dept.name}</span>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => moveDepartment(dept.id, "up")}
-                    disabled={index === 0}
-                    className={`p-2 rounded-lg transition-colors duration-200 ${
-                      index === 0
-                        ? "text-gray-500 cursor-not-allowed"
-                        : "text-white hover:bg-zinc-800"
-                    }`}
-                  >
-                    <ArrowUp size={20} />
-                  </button>
-                  <button
-                    onClick={() => moveDepartment(dept.id, "down")}
-                    disabled={index === departments.length - 1}
-                    className={`p-2 rounded-lg transition-colors duration-200 ${
-                      index === departments.length - 1
-                        ? "text-gray-500 cursor-not-allowed"
-                        : "text-white hover:bg-zinc-800"
-                    }`}
-                  >
-                    <ArrowDown size={20} />
-                  </button>
-                  <button
-                    onClick={() => handleDeleteDepartment(dept.id)}
-                    className="p-2 rounded-lg text-red-500 hover:bg-red-500/20 transition-colors duration-200"
-                  >
-                    <Trash2 size={20} />
-                  </button>
+          {/* Draggable Departments List */}
+          <DragDropContext onDragEnd={handleDragEnd}>
+            <Droppable droppableId="departments">
+              {(provided) => (
+                <div
+                  {...provided.droppableProps}
+                  ref={provided.innerRef}
+                  className="space-y-4"
+                >
+                  {departments.map((dept, index) => (
+                    <Draggable
+                      key={dept.id}
+                      draggableId={dept.id}
+                      index={index}
+                    >
+                      {(provided) => (
+                        <div
+                          ref={provided.innerRef}
+                          {...provided.draggableProps}
+                          {...provided.dragHandleProps}
+                          className="flex items-center justify-between bg-zinc-900 p-4 rounded-lg"
+                        >
+                          {editingDepartment?.id === dept.id ? (
+                            <div className="flex-1 flex items-center gap-2">
+                              <input
+                                type="text"
+                                value={editingDepartment.name}
+                                onChange={(e) =>
+                                  setEditingDepartment({
+                                    ...editingDepartment,
+                                    name: e.target.value,
+                                  })
+                                }
+                                className="flex-1 rounded-lg bg-zinc-800 border-zinc-700 text-white"
+                              />
+                              <button
+                                onClick={handleUpdateDepartment}
+                                className="p-2 rounded-lg text-green-500 hover:bg-green-500/20"
+                              >
+                                <Save size={20} />
+                              </button>
+                              <button
+                                onClick={() => setEditingDepartment(null)}
+                                className="p-2 rounded-lg text-gray-500 hover:bg-gray-500/20"
+                              >
+                                <X size={20} />
+                              </button>
+                            </div>
+                          ) : (
+                            <>
+                              <span className="text-white font-medium">
+                                {dept.name}
+                              </span>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => handleEditDepartment(dept)}
+                                  className="p-2 rounded-lg text-white hover:bg-zinc-800"
+                                >
+                                  <Edit2 size={20} />
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteDepartment(dept.id)}
+                                  className="p-2 rounded-lg text-red-500 hover:bg-red-500/20"
+                                >
+                                  <Trash2 size={20} />
+                                </button>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </Draggable>
+                  ))}
+                  {provided.placeholder}
                 </div>
-              </div>
-            ))}
-          </div>
+              )}
+            </Droppable>
+          </DragDropContext>
         </div>
 
         {/* Team Members Management */}
         <div className="bg-black rounded-lg shadow-lg p-6 border border-zinc-800">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-white">Team Members</h2>
-            <button
-              onClick={() => {
-                setFormData(initialMemberState);
-                setEditingId(null);
-                setIsFormVisible(!isFormVisible);
-              }}
-              className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors duration-200"
-            >
-              <UserPlus size={20} />
-              {isFormVisible ? "Close Form" : "Add Member"}
-            </button>
-          </div>
-
-          {/* Member Form */}
+          {/* Member form with edition selection */}
           {isFormVisible && (
             <form onSubmit={handleSubmit} className="space-y-4 mb-8">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Existing form fields */}
                 <div>
+                  <label className="block text-sm font-medium text-gray-200">
+                    Edition
+                  </label>
+                  <select
+                    name="editionId"
+                    value={formData.editionId}
+                    onChange={handleInputChange}
+                    className="mt-1 block w-full rounded-lg bg-zinc-900 border-zinc-700 text-white"
+                  >
+                    <option value="">Select Edition</option>
+                    {editions.map((edition) => (
+                      <option key={edition.id} value={edition.id}>
+                        {edition.year} - {edition.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                
+                                <div>
                   <label className="block text-sm font-medium text-gray-200">
                     Name
                   </label>
@@ -435,27 +462,27 @@ const OldTeamManagementForm = () => {
                     <span className="text-white">Department Head</span>
                   </label>
                 </div>
-              </div>
 
-              <div className="flex justify-end">
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className={`
-                    inline-flex items-center px-6 py-3 rounded-lg text-white transition-colors duration-200
-                    ${
-                      saving
-                        ? "bg-zinc-600 cursor-not-allowed"
-                        : "bg-red-600 hover:bg-red-700"
-                    }
-                  `}
-                >
-                  {saving
-                    ? "Saving..."
-                    : editingId
-                    ? "Update Member"
-                    : "Add Member"}
-                </button>
+                <div className="col-span-2">
+                  <button
+                    type="submit"
+                    disabled={saving}
+                    className={`
+                      inline-flex items-center px-6 py-3 rounded-lg text-white transition-colors duration-200
+                      ${
+                        saving
+                          ? "bg-zinc-600 cursor-not-allowed"
+                          : "bg-red-600 hover:bg-red-700"
+                      }
+                    `}
+                  >
+                    {saving
+                      ? "Saving..."
+                      : editingId
+                      ? "Update Member"
+                      : "Add Member"}
+                  </button>
+                </div>
               </div>
             </form>
           )}
@@ -634,4 +661,4 @@ const OldTeamManagementForm = () => {
   );
 };
 
-export default OldTeamManagementForm;
+export default EnhancedTeamManagementForm;
